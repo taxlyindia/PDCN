@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>My Profile – PDCN CRM</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/static/css/dashboard.css"/>
+<script src="/static/js/app.js"></script>
+<style>
+/* ── Profile photo ring ── */
+.avatar-ring{
+  position:relative;width:110px;height:110px;margin:0 auto 20px;cursor:pointer;
+}
+.avatar-ring:hover .avatar-overlay{opacity:1}
+.big-avatar{
+  width:110px;height:110px;border-radius:50%;
+  background:linear-gradient(135deg,var(--primary),#7c3aed);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:36px;font-weight:800;color:#fff;
+  box-shadow:0 4px 20px rgba(79,70,229,.3);
+  overflow:hidden;position:relative;
+}
+.big-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.avatar-overlay{
+  position:absolute;inset:0;border-radius:50%;
+  background:rgba(15,23,42,.55);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  opacity:0;transition:opacity .2s;
+}
+.avatar-overlay span{font-size:22px}
+.avatar-overlay p{font-size:11px;color:#fff;font-weight:600;letter-spacing:.04em;margin:0}
+.avatar-ring .upload-ring{
+  position:absolute;bottom:4px;right:4px;
+  width:30px;height:30px;border-radius:50%;
+  background:var(--primary);border:2.5px solid #fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;box-shadow:var(--s1);
+}
+
+/* ── Info rows ── */
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid var(--border)}
+.info-row:last-child{border-bottom:none}
+.info-label{font-size:13px;color:var(--tx-3);font-weight:500}
+.info-value{font-size:13.5px;font-weight:600;color:var(--tx-2)}
+
+/* ── Upload progress ── */
+.upload-progress{
+  height:4px;background:var(--border);border-radius:2px;
+  margin-top:10px;overflow:hidden;display:none
+}
+.upload-bar{height:100%;background:var(--primary);border-radius:2px;transition:width .3s;width:0%}
+
+/* ── Success/Error inline ── */
+.inline-ok{
+  background:var(--green-l);border:1px solid var(--green-t);color:var(--green);
+  padding:10px 14px;border-radius:8px;font-size:13px;display:none
+}
+.inline-err{
+  background:var(--red-l);border:1px solid var(--red-t);color:var(--red);
+  padding:10px 14px;border-radius:8px;font-size:13px;display:none
+}
+
+@media(max-width:900px){.profile-grid{grid-template-columns:1fr!important}}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="icon">T</div>
+    <div>
+      <div class="name">PDCN <span>CRM</span></div>
+      <div class="badge">PDCN CRM</div>
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Administration</div>
+    <a class="nav-item" href="/templates/tenant-dashboard.html"><span class="nav-icon">◈</span>Dashboard</a>
+    <a class="nav-item" href="/templates/tenant-users.html"><span class="nav-icon">◎</span>User Management</a>
+    <a class="nav-item active" href="/templates/tenant-profile.html"><span class="nav-icon">👤</span>My Profile</a>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar" id="t-avatar">TA</div>
+      <div class="user-info">
+        <div class="user-name" id="t-name">User</div>
+        <div class="user-role" id="t-role">Admin</div>
+      </div>
+      <button class="logout-btn" onclick="logout()">⏻</button>
+    </div>
+  </div>
+</aside>
+
+<!-- Main -->
+<div class="main-content">
+  <div class="topbar">
+    <span class="topbar-title">My Profile</span>
+  </div>
+  <div class="page-content">
+    <div class="page-header">
+      <h1>Profile &amp; Security</h1>
+      <p>Manage your account information, photo and password</p>
+    </div>
+
+    <div class="profile-grid" style="display:grid;grid-template-columns:300px 1fr;gap:24px">
+
+      <!-- ── LEFT: Photo + Account Info ── -->
+      <div>
+        <!-- Profile photo card -->
+        <div class="table-card" style="padding:32px;text-align:center">
+
+          <!-- Photo ring with hover overlay -->
+          <div class="avatar-ring" onclick="document.getElementById('photo-input').click()" title="Change profile photo">
+            <div class="big-avatar" id="big-avatar">
+              <span id="avatar-initials">?</span>
+            </div>
+            <div class="avatar-overlay">
+              <span>📷</span>
+              <p>Change Photo</p>
+            </div>
+            <div class="upload-ring">📷</div>
+          </div>
+
+          <!-- Hidden file input -->
+          <input type="file" id="photo-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="handlePhotoUpload(this.files[0])"/>
+
+          <div class="upload-progress" id="upload-progress">
+            <div class="upload-bar" id="upload-bar"></div>
+          </div>
+
+          <div class="inline-ok" id="photo-ok" style="margin-top:10px">✓ Photo updated successfully!</div>
+          <div class="inline-err" id="photo-err" style="margin-top:10px"></div>
+
+          <p style="font-size:11px;color:var(--tx-4);margin-top:12px">JPG, PNG or WebP · Max 2 MB</p>
+
+          <div style="margin-top:16px">
+            <div class="profile-name" id="p-name" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:20px;font-weight:700;color:var(--tx-2)">—</div>
+            <div style="color:var(--tx-3);font-size:13px;margin-top:4px" id="p-email">—</div>
+            <div style="margin-top:10px" id="p-role-badge"></div>
+          </div>
+        </div>
+
+        <!-- Account info -->
+        <div class="table-card" style="padding:24px;margin-top:20px">
+          <h3 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:700;margin-bottom:16px;color:var(--tx-2)">Account Info</h3>
+          <div class="info-row"><span class="info-label">Role</span><span class="info-value" id="i-role">—</span></div>
+          <div class="info-row"><span class="info-label">Mobile</span><span class="info-value" id="i-mobile">—</span></div>
+          <div class="info-row"><span class="info-label">Login Method</span><span class="info-value" id="i-provider">—</span></div>
+          <div class="info-row"><span class="info-label">Last Login</span><span class="info-value" id="i-last">—</span></div>
+          <div class="info-row"><span class="info-label">Member Since</span><span class="info-value" id="i-joined">—</span></div>
+        </div>
+      </div>
+
+      <!-- ── RIGHT: Update Name, Change Password ── -->
+      <div>
+        <!-- Update name/mobile -->
+        <div class="table-card" style="padding:32px;margin-bottom:20px">
+          <h3 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:700;margin-bottom:6px;color:var(--tx-2)">Update Profile</h3>
+          <p style="color:var(--tx-3);font-size:13.5px;margin-bottom:24px">Update your display name and mobile number.</p>
+          <div id="profile-ok" class="inline-ok" style="margin-bottom:14px"></div>
+          <div id="profile-err" class="inline-err" style="margin-bottom:14px"></div>
+          <form id="profile-form">
+            <div class="form-group">
+              <label class="form-label">Full Name</label>
+              <input class="form-input" id="pf-name" type="text" placeholder="Your full name"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Mobile Number</label>
+              <input class="form-input" id="pf-mobile" type="tel" placeholder="+91 98765 43210"/>
+            </div>
+            <button type="submit" class="btn btn-primary" id="pf-btn">Save Changes</button>
+          </form>
+        </div>
+
+        <!-- Change password -->
+        <div class="table-card" style="padding:32px;margin-bottom:20px">
+          <h3 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:700;margin-bottom:6px;color:var(--tx-2)">Change Password</h3>
+          <p style="color:var(--tx-3);font-size:13.5px;margin-bottom:24px">Use a strong, unique password. Min 8 chars, one uppercase, one digit.</p>
+          <div id="pw-err" class="inline-err" style="margin-bottom:14px"></div>
+          <div id="pw-ok" class="inline-ok" style="margin-bottom:14px"></div>
+          <form id="pw-form">
+            <div class="form-group">
+              <label class="form-label">Current Password</label>
+              <input class="form-input" id="pw-current" type="password" placeholder="Your current password"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">New Password</label>
+              <input class="form-input" id="pw-new" type="password" placeholder="At least 8 chars, one uppercase, one digit"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Confirm New Password</label>
+              <input class="form-input" id="pw-confirm" type="password" placeholder="Repeat new password"/>
+            </div>
+            <button type="submit" class="btn btn-primary" id="pw-btn">Update Password</button>
+          </form>
+        </div>
+
+        <!-- Forgot password -->
+        <div class="table-card" style="padding:24px">
+          <h3 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:700;margin-bottom:8px;color:var(--tx-2)">Forgot Your Password?</h3>
+          <p style="color:var(--tx-3);font-size:13px;margin-bottom:16px">If you can't remember your current password, request a reset link via email.</p>
+          <a href="/templates/forgot-password.html" class="btn btn-ghost">Request Reset Link</a>
+        </div>
+      </div>
+
+    </div><!-- /profile-grid -->
+  </div>
+</div>
+
+<script>
+var currentUser = null;
+
+document.addEventListener('DOMContentLoaded', async function(){
+  if(!requireAuth()) return;
+  var u = Auth.getUser();
+  if(!u){ window.location.href='/templates/login.html'; return; }
+  // Only tenant_admin accesses this page
+  if(u.role !== 'tenant_admin'){
+    window.location.href='/templates/pdcn-dashboard.html'; return;
+  }
+  currentUser = u;
+
+  // Sidebar
+  document.getElementById('t-name').textContent = u.full_name||'Admin';
+  document.getElementById('t-avatar').textContent = (u.full_name||'TA').slice(0,2).toUpperCase();
+  document.getElementById('t-role').textContent = 'Tenant Admin';
+
+  // Profile card
+  populateProfile(u);
+
+  // Load photo
+  loadPhoto();
+
+  // Pre-fill profile form
+  document.getElementById('pf-name').value = u.full_name || '';
+  document.getElementById('pf-mobile').value = u.mobile || '';
+});
+
+function populateProfile(u){
+  var initials = (u.full_name||'?').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+  document.getElementById('avatar-initials').textContent = initials;
+  document.getElementById('t-avatar').textContent = initials;
+  document.getElementById('p-name').textContent = u.full_name||'—';
+  document.getElementById('p-email').textContent = u.email||'—';
+  document.getElementById('p-role-badge').innerHTML = roleBadge(u.role);
+  document.getElementById('i-role').innerHTML = roleBadge(u.role);
+  document.getElementById('i-mobile').textContent = u.mobile||'—';
+  document.getElementById('i-provider').textContent = u.auth_provider==='google'?'🔵 Google':'🔑 Password';
+  document.getElementById('i-last').textContent = u.last_login ? formatDateTime(u.last_login) : 'Never';
+  document.getElementById('i-joined').textContent = formatDate(u.created_at);
+}
+
+async function loadPhoto(){
+  try{
+    var res = await api('/auth/profile/photo-url');
+    if(res && res.photo_url){
+      setAvatarPhoto(res.photo_url);
+    }
+  }catch(e){}
+}
+
+function setAvatarPhoto(url){
+  var bigAvatar = document.getElementById('big-avatar');
+  var initialsEl = document.getElementById('avatar-initials');
+  // Replace initials span with img
+  bigAvatar.innerHTML = '<img src="'+url+'" alt="Profile photo" onerror="this.parentElement.innerHTML=\'<span id=avatar-initials>'+
+    (currentUser?((currentUser.full_name||'?').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase()):'?')+'</span>\'">';
+  // Also update sidebar avatar
+  document.getElementById('t-avatar').style.backgroundImage = 'url('+url+')';
+  document.getElementById('t-avatar').style.backgroundSize = 'cover';
+  document.getElementById('t-avatar').textContent = '';
+}
+
+async function handlePhotoUpload(file){
+  if(!file) return;
+
+  // Validate
+  if(file.size > 2*1024*1024){
+    showFeedback('photo-err','File too large — max 2 MB'); return;
+  }
+  if(!['image/jpeg','image/png','image/webp'].includes(file.type)){
+    showFeedback('photo-err','Only JPG, PNG or WebP allowed'); return;
+  }
+
+  // Show progress
+  var prog = document.getElementById('upload-progress');
+  var bar = document.getElementById('upload-bar');
+  prog.style.display = 'block';
+  bar.style.width = '0%';
+  hideFeedback('photo-ok'); hideFeedback('photo-err');
+
+  // Animate progress bar
+  var pct = 0;
+  var ticker = setInterval(function(){
+    pct = Math.min(pct+8, 85);
+    bar.style.width = pct + '%';
+  }, 80);
+
+  try{
+    var fd = new FormData();
+    fd.append('file', file);
+    var res = await fetch('/api/v1/auth/profile/photo', {
+      method: 'POST',
+      headers: {'Authorization': 'Bearer ' + Auth.getAccess()},
+      body: fd
+    });
+    clearInterval(ticker);
+    if(!res.ok){
+      var e = await res.json().catch(function(){return{detail:'Upload failed'};});
+      throw new Error(e.detail||'Upload failed');
+    }
+    var data = await res.json();
+    bar.style.width = '100%';
+    setTimeout(function(){ prog.style.display='none'; bar.style.width='0%'; }, 600);
+    setAvatarPhoto(data.photo_url);
+    showFeedback('photo-ok', '✓ Photo updated successfully!');
+    showToast('Profile photo updated!','success');
+  }catch(err){
+    clearInterval(ticker);
+    prog.style.display = 'none';
+    showFeedback('photo-err', err.message);
+  }
+}
+
+// ── Update profile form ──────────────────────────────────────
+document.getElementById('profile-form').addEventListener('submit', async function(e){
+  e.preventDefault();
+  hideFeedback('profile-ok'); hideFeedback('profile-err');
+  var btn = document.getElementById('pf-btn');
+  setLoading(btn, true);
+  var name = document.getElementById('pf-name').value.trim();
+  var mobile = document.getElementById('pf-mobile').value.trim();
+  if(!name){ showFeedback('profile-err','Full name is required'); setLoading(btn,false); return; }
+  try{
+    // PATCH /tenant/profile (update own name/mobile)
+    await api('/tenant/profile', {
+      method:'PATCH',
+      body: JSON.stringify({full_name:name, mobile:mobile||null})
+    });
+    // Update localStorage
+    var u = Auth.getUser();
+    u.full_name = name;
+    u.mobile = mobile||null;
+    localStorage.setItem('user', JSON.stringify(u));
+    currentUser = u;
+    populateProfile(u);
+    document.getElementById('t-name').textContent = name;
+    document.getElementById('t-avatar').textContent = name.slice(0,2).toUpperCase();
+    showFeedback('profile-ok','✓ Profile updated successfully!');
+    showToast('Profile updated!','success');
+  }catch(err){
+    showFeedback('profile-err', err.message);
+  }
+  setLoading(btn, false);
+});
+
+// ── Change password form ─────────────────────────────────────
+document.getElementById('pw-form').addEventListener('submit', async function(e){
+  e.preventDefault();
+  hideFeedback('pw-ok'); hideFeedback('pw-err');
+  var btn = document.getElementById('pw-btn');
+  setLoading(btn, true);
+  try{
+    await api.post('/auth/change-password',{
+      current_password: document.getElementById('pw-current').value,
+      new_password: document.getElementById('pw-new').value,
+      confirm_password: document.getElementById('pw-confirm').value,
+    });
+    showFeedback('pw-ok','✓ Password updated successfully!');
+    document.getElementById('pw-form').reset();
+    showToast('Password changed successfully!','success');
+  }catch(err){
+    showFeedback('pw-err', err.message);
+  }
+  setLoading(btn, false);
+});
+
+function showFeedback(id, msg){
+  var el = document.getElementById(id);
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function hideFeedback(id){
+  var el = document.getElementById(id);
+  el.style.display = 'none';
+}
+</script>
+</body>
+</html>

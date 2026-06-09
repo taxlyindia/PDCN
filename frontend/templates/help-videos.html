@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Help & Training – PDCN CRM PDCN</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/static/css/dashboard.css"/>
+<script src="/static/js/app.js"></script>
+<style>
+.hero-bar{background:linear-gradient(135deg,rgba(200,146,42,.1),rgba(99,102,241,.05));border:1.5px solid rgba(79,70,229,.15);border-radius:16px;padding:28px 32px;margin-bottom:28px;display:flex;align-items:center;gap:20px}
+.hero-bar .icon{font-size:44px;flex-shrink:0}
+.hero-bar h2{font-family:'Outfit',serif;font-size:1.5rem;font-weight:600;color:var(--ink);margin-bottom:5px}
+.hero-bar p{font-size:13px;color:var(--ink2);line-height:1.6;max-width:560px}
+
+.cat-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
+.cat-tab{padding:7px 16px;border-radius:20px;font-size:12px;font-weight:500;border:1px solid var(--border);background:transparent;color:var(--ink2);cursor:pointer;transition:all .2s}
+.cat-tab:hover,.cat-tab.active{background:rgba(200,146,42,.12);border-color:rgba(200,146,42,.3);color:var(--gold-light)}
+
+.video-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px}
+.video-card{background:var(--surface);border:1px solid var(--border);border-radius:13px;overflow:hidden;cursor:pointer;transition:all .25s}
+.video-card:hover{border-color:rgba(200,146,42,.3);transform:translateY(-3px);box-shadow:0 16px 40px rgba(0,0,0,.35)}
+.thumb{aspect-ratio:16/9;background:linear-gradient(135deg,#111929,#1A2640);display:flex;align-items:center;justify-content:center;position:relative}
+.thumb:hover .pb{transform:scale(1.12)}
+.pb{width:50px;height:50px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:20px;transition:transform .2s;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.th-cat{position:absolute;top:10px;left:10px;padding:3px 8px;border-radius:5px;font-size:10px;font-weight:700;background:rgba(200,146,42,.85);color:#111;text-transform:uppercase;letter-spacing:.04em}
+.th-dur{position:absolute;bottom:8px;right:8px;font-size:11px;font-family:'JetBrains Mono',monospace;background:rgba(0,0,0,.7);color:var(--ink);padding:2px 6px;border-radius:4px}
+.vbody{padding:14px 16px}
+.vtitle{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:5px;line-height:1.4}
+.vdesc{font-size:12px;color:var(--ink2);line-height:1.5;margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.vmeta{display:flex;justify-content:space-between;font-size:11px;color:var(--tx-4)}
+
+.player-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:2000;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+.player-overlay.open{display:flex}
+.pv-wrap{width:min(900px,94vw);background:var(--primary-bg);border-radius:14px;overflow:hidden;border:1px solid rgba(200,146,42,.2);box-shadow:0 40px 80px rgba(0,0,0,.7)}
+.pv-wrap video{width:100%;display:block;max-height:58vh}
+.pv-footer{padding:14px 20px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.pv-info .pv-title{font-size:15px;font-weight:600;color:var(--ink);margin-bottom:3px}
+.pv-info .pv-desc{font-size:12px;color:var(--ink2);line-height:1.5;max-width:600px}
+.pv-close{background:none;border:none;color:var(--ink2);font-size:22px;cursor:pointer;flex-shrink:0;padding:2px}
+.pv-close:hover{color:var(--text)}
+
+.empty{text-align:center;padding:60px 20px;color:var(--ink2);grid-column:1/-1}
+.empty .icon{font-size:48px;margin-bottom:14px}
+.empty p{font-size:14px;font-family:'Outfit',serif;color:var(--muted)}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="icon">T</div>
+    <div>
+      <div class="name">PDCN <span>CRM</span></div>
+      <div class="badge">Workflow</div>
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">PDCN Workflow</div>
+    <a class="nav-item" href="/templates/pdcn-dashboard.html"><span class="nav-icon">📊</span>Dashboard</a>
+    <a class="nav-item" href="/templates/pdcn-new-claim.html" id="snav-new" style="display:none"><span class="nav-icon">➕</span>New Claim</a>
+    <a class="nav-item" href="/templates/pdcn-sales-register.html" id="snav-sales" style="display:none"><span class="nav-icon">📊</span>Sales Register</a>
+    <a class="nav-item" href="/templates/chat.html"><span class="nav-icon">💬</span>Chat</a>
+    <a class="nav-item active" href="/templates/help-videos.html"><span class="nav-icon">🎓</span>Help &amp; Training</a>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar" id="t-avatar">U</div>
+      <div class="user-info"><div class="user-name" id="t-name">User</div><div class="user-role" id="t-role">—</div></div>
+      <button class="logout-btn" onclick="logout()">⏻</button>
+    </div>
+  </div>
+</aside>
+
+<div class="main-content">
+  <div class="topbar"><span class="topbar-title">🎓 Help &amp; Training Videos</span></div>
+  <div class="page-content">
+
+    <div class="hero-bar">
+      <div class="icon">🎓</div>
+      <div>
+        <h2>PDCN CRM Knowledge Base</h2>
+        <p>Video guides, workflow walkthroughs, and training materials for every team role. Watch step-by-step tutorials to get the most out of your PDCN workflow platform.</p>
+      </div>
+    </div>
+
+    <div class="cat-tabs">
+      <button class="cat-tab active" onclick="filterCat('',this)">All Videos</button>
+      <button class="cat-tab" onclick="filterCat('overview',this)">Platform Overview</button>
+      <button class="cat-tab" onclick="filterCat('workflow',this)">PDCN Workflow</button>
+      <button class="cat-tab" onclick="filterCat('dealer',this)" id="tab-dealer">For Dealers</button>
+      <button class="cat-tab" onclick="filterCat('cn_team',this)" id="tab-cn">CN Team</button>
+      <button class="cat-tab" onclick="filterCat('finance',this)" id="tab-fin">Finance Team</button>
+      <button class="cat-tab" onclick="filterCat('cfa',this)" id="tab-cfa">CFA Team</button>
+    </div>
+
+    <div class="video-grid" id="video-grid">
+      <div style="grid-column:1/-1;text-align:center;padding:50px;color:var(--muted)">Loading training videos…</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Player -->
+<div class="player-overlay" id="player">
+  <div class="pv-wrap">
+    <video id="pv" controls preload="metadata" style="background:#000"></video>
+    <div class="pv-footer">
+      <div class="pv-info">
+        <div class="pv-title" id="pv-title">—</div>
+        <div class="pv-desc" id="pv-desc">—</div>
+      </div>
+      <button class="pv-close" onclick="closePlayer()">✕</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var allVids=[], userRole='';
+document.addEventListener('DOMContentLoaded', function(){
+  var u = Auth.getUser();
+  if(!u||!Auth.getAccess()){ window.location.href='/templates/login.html'; return; }
+  userRole = u.role;
+  document.getElementById('t-name').textContent = u.full_name||'';
+  document.getElementById('t-avatar').textContent = (u.full_name||'U').slice(0,2).toUpperCase();
+  document.getElementById('t-role').textContent = (u.role||'').replace(/_/g,' ');
+  if(u.role==='tenant_admin'){ window.location.href='/templates/tenant-dashboard.html'; return; }
+  if(u.role==='dealer'){ var sn=document.getElementById('snav-new');if(sn)sn.style.display=''; }
+  if(['finance_team','finance_cfa_team'].includes(u.role)){ var ss=document.getElementById('snav-sales');if(ss)ss.style.display=''; }
+
+  // Hide irrelevant role tabs for cleaner UX
+  var roleTabMap = {dealer:'tab-dealer',cn_team:'tab-cn',finance_team:'tab-fin',cfa_team:'tab-cfa',finance_cfa_team:'tab-fin'};
+  // Don't hide — all roles benefit from all content
+
+  loadVideos();
+});
+
+async function loadVideos(){
+  try{
+    var d = await api.get('/knowledge/videos');
+    allVids = d.videos||[];
+    renderGrid(allVids);
+  }catch(e){
+    document.getElementById('video-grid').innerHTML='<div class="empty" style="grid-column:1/-1"><div class="icon">🎬</div><p>No training videos available yet</p></div>';
+  }
+}
+
+function filterCat(cat, btn){
+  document.querySelectorAll('.cat-tab').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  renderGrid(cat ? allVids.filter(function(v){ return v.category===cat; }) : allVids);
+}
+
+function renderGrid(vids){
+  var grid = document.getElementById('video-grid');
+  if(!vids.length){
+    grid.innerHTML='<div class="empty"><div class="icon">🔍</div><p>No videos in this category yet</p></div>';
+    return;
+  }
+  grid.innerHTML = vids.map(function(v){
+    var dur = v.duration_str ? '<span class="th-dur">'+v.duration_str+'</span>' : '';
+    return '<div class="video-card" onclick="play(\''+v.id+'\',\''+v.filename+'\',\''+escAttr(v.title)+'\',\''+escAttr(v.description||'')+'\')">'+
+      '<div class="thumb"><div class="pb">▶</div>'+
+      '<span class="th-cat">'+v.category_label+'</span>'+dur+'</div>'+
+      '<div class="vbody">'+
+        '<div class="vtitle">'+escHtml(v.title)+'</div>'+
+        '<div class="vdesc">'+(v.description?escHtml(v.description):'<span style="font-style:italic">Click to watch</span>')+'</div>'+
+        '<div class="vmeta"><span>'+formatDate(v.created_at)+'</span><span>👁 '+v.view_count+' views</span></div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function escHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escAttr(s){ return (s||'').replace(/'/g,'&#39;').replace(/"/g,'&quot;'); }
+function formatDate(iso){ if(!iso)return''; return new Date(iso).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); }
+
+function play(id, filename, title, desc){
+  var video = document.getElementById('pv');
+  video.src = '/api/v1/knowledge/videos/'+filename+'/stream';
+  document.getElementById('pv-title').textContent = title||'';
+  document.getElementById('pv-desc').textContent = desc||'';
+  document.getElementById('player').classList.add('open');
+  video.play();
+}
+function closePlayer(){
+  var v=document.getElementById('pv'); v.pause(); v.src='';
+  document.getElementById('player').classList.remove('open');
+}
+document.getElementById('player').onclick = function(e){ if(e.target===this) closePlayer(); };
+function logout(){ Auth.clear(); window.location.href='/templates/login.html'; }
+</script>
+</body>
+</html>

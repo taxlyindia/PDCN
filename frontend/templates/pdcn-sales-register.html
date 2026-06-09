@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Sales Register – PDCN CRM</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/static/css/dashboard.css"/>
+<script src="/static/js/app.js"></script>
+<script>
+async function loadUploadedMonths(){
+  try{
+    var data = await api('/pdcn/sales-register/available-months');
+    var months = data.months || [];
+    var container = document.getElementById('month-chips');
+    if(!months.length){
+      container.innerHTML = '<span style="color:var(--tx-4);font-size:13px;padding:8px 14px;border:1.5px dashed var(--border);border-radius:8px">No months uploaded yet — dealers cannot create claims until at least one month is uploaded.</span>';
+      return;
+    }
+    container.innerHTML = months.map(function(m){
+      var dt = m.uploaded_at ? new Date(m.uploaded_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '';
+      return '<div style="display:inline-flex;flex-direction:column;gap:2px;padding:8px 16px;background:var(--green-l);border:1.5px solid var(--green-t);border-radius:10px">'+
+        '<span style="font-size:13px;font-weight:800;color:var(--green)">'+(m.month_label||m.batch_key)+'</span>'+
+        '<span style="font-size:11px;color:var(--tx-3)">'+(m.row_count||0)+' rows · '+dt+'</span>'+
+      '</div>';
+    }).join('');
+  }catch(e){
+    console.warn('Could not load uploaded months', e);
+  }
+}
+
+// Refresh months panel after successful upload
+var _origUploadResult = null;
+</script>
+<style>
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;margin-bottom:20px}
+.card-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:700;margin-bottom:14px;color:var(--primary)}
+.upload-zone{border:2px dashed var(--border);border-radius:12px;padding:36px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:16px}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--blue);background:var(--blue-pale)}
+.upload-zone p{color:var(--ink2);font-size:14px;margin:8px 0 0}
+.form-input,.form-select{padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--primary-bg);color:var(--ink);font-size:14px;font-family:'Nunito',sans-serif}
+.form-input:focus,.form-select:focus{outline:none;border-color:var(--blue)}
+.btn{padding:9px 20px;border-radius:8px;font-size:14px;font-weight:600;border:none;cursor:pointer;transition:all .2s}
+.btn-primary{background:#6366f1;color:#fff}.btn-primary:hover{background:#4f46e5}
+.btn-ghost{background:var(--primary-bg);color:var(--ink2);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse}
+th{padding:9px 12px;font-size:11px;font-weight:600;color:var(--ink2);text-transform:uppercase;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
+td{padding:10px 12px;font-size:13px;border-bottom:1px solid var(--border)}
+.result-bar{padding:10px 14px;font-size:13px;color:var(--ink2);display:flex;justify-content:space-between;align-items:center}
+.page-btns{display:flex;gap:6px}
+.page-btn{padding:6px 12px;border-radius:6px;border:1px solid var(--border);background:var(--primary-bg);color:var(--ink);cursor:pointer;font-size:13px}
+.page-btn:disabled{opacity:.4;cursor:not-allowed}
+.progress-bar{height:6px;background:var(--blue-pale);border-radius:3px;margin-top:10px;overflow:hidden}
+.progress-fill{height:100%;background:#6366f1;border-radius:3px;transition:width .3s;width:0%}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="icon">T</div>
+    <div>
+      <div class="name">PDCN <span>CRM</span></div>
+      <div class="badge">Workflow</div>
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">PDCN Workflow</div>
+    <a class="nav-item" href="/templates/pdcn-dashboard.html" id="snav-dashboard"><span class="nav-icon">📊</span>Dashboard</a>
+    <a class="nav-item active" href="/templates/pdcn-sales-register.html" id="snav-sales"><span class="nav-icon">📊</span>Sales Register</a>
+    <a class="nav-item" href="/templates/pdcn-new-claim.html" id="snav-new" style="display:none"><span class="nav-icon">➕</span>New Claim</a>
+      <a class="nav-item" href="/templates/chat.html"><span class="nav-icon">💬</span>Chat <span id="chat-unread-badge" style="display:none;background:#ef4444;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:4px">0</span></a>
+    <a class="nav-item" href="/templates/pdcn-sales-template.html" id="snav-template"><span class="nav-icon">📥</span>Templates &amp; Reports</a>
+    <a class="nav-item" href="/templates/help-videos.html"><span class="nav-icon">🎓</span>Help &amp; Training</a>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar" id="t-avatar">U</div>
+      <div class="user-info"><div class="user-name" id="t-name">User</div><div class="user-role" id="t-role">—</div></div>
+      <button class="logout-btn" id="logout-btn">⏻</button>
+    </div>
+  </div>
+</aside>
+
+<div class="main-content">
+  <div class="topbar"><span class="topbar-title">Sales Register</span></div>
+  <div class="page-content">
+
+    <!-- Upload Section -->
+    <div class="card">
+      <div class="card-title">📤 Upload Sales Register</div>
+      <p style="font-size:13px;color:var(--ink2);margin:0 0 14px">Upload monthly sales data (Excel or CSV). System auto-validates and builds qty utilization ledger.</p>
+      <div class="upload-zone" id="drop-zone" onclick="document.getElementById('sr-file').click()">
+        <div style="font-size:36px">📊</div>
+        <p>Click or drag &amp; drop Excel / CSV file here</p>
+        <p style="font-size:12px;margin-top:4px">Required columns: Invoice No, Invoice Date, Dealer Name, Product Name, Quantity, Rate</p>
+        <div id="selected-file" style="color:var(--primary);font-size:13px;margin-top:8px"></div>
+      </div>
+      <input type="file" id="sr-file" style="display:none" accept=".xlsx,.xls,.csv" onchange="fileSelected(this.files[0])"/>
+
+      <div style="display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;margin-top:14px">
+        <div>
+          <label style="display:block;font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:5px">Upload Batch (Month)</label>
+          <input class="form-input" id="batch-id" type="month" style="width:180px"/>
+        </div>
+        <button class="btn btn-primary" id="upload-btn" onclick="uploadFile()">📤 Upload &amp; Process</button>
+      </div>
+      <div class="progress-bar" id="progress-wrap" style="display:none">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+      <div id="upload-result" style="margin-top:12px;font-size:13px"></div>
+    </div>
+
+    <!-- Uploaded Months Panel -->
+    <div class="card" style="margin-bottom:16px">
+      <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:700;color:var(--primary);margin-bottom:12px">
+        📅 Months with Sales Register Uploaded
+      </div>
+      <p style="font-size:12.5px;color:var(--tx-3);margin:0 0 14px">
+        Dealers can only create claims for months listed below. Upload a new month's register to unlock claim creation for that period.
+      </p>
+      <div id="month-chips" style="display:flex;flex-wrap:wrap;gap:8px">
+        <span style="color:var(--tx-4);font-size:13px">Loading…</span>
+      </div>
+    </div>
+
+    <!-- Records Table -->
+    <div class="card" style="padding:0">
+      <div style="padding:16px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;border-bottom:1px solid var(--border)">
+        <span style="font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:700;color:var(--primary)">Uploaded Records</span>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-ghost" style="font-size:12px" onclick="exportSR()">⬇ Export Excel</button>
+          <input class="form-input" id="search-inp" placeholder="🔍 Search invoice / dealer…" style="width:220px" oninput="debounce()"/>
+        </div>
+      </div>
+      <div class="result-bar">
+        <span id="rec-count">Loading…</span>
+        <div class="page-btns">
+          <button class="page-btn" id="prev-btn">← Prev</button>
+          <button class="page-btn" id="next-btn">Next →</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr>
+            <th>#</th><th>Invoice No</th><th>Invoice Date</th><th>Dealer</th><th>Dealer Code</th>
+            <th>Product</th><th>Code</th><th>Batch</th><th>Qty</th><th>Rate</th><th>Batch ID</th>
+          </tr></thead>
+          <tbody id="sr-tbody"><tr><td colspan="11" style="text-align:center;padding:40px;color:var(--muted)">Loading records…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var page=1,perPage=20,total=0,debTimer=null,selFile=null;
+
+document.addEventListener('DOMContentLoaded',function(){
+  var u=getUser();
+  if(!u||!getToken()){window.location.href='/templates/login.html';return;}
+  document.getElementById('t-name').textContent=u.full_name||'';
+  document.getElementById('t-avatar').textContent=(u.full_name||'U').slice(0,2).toUpperCase();
+  document.getElementById('t-role').textContent=(u.role||'').replace(/_/g,' ');
+
+  // Role-based nav — show only what this role needs, redirect admin
+  if(u.role === 'tenant_admin'){ window.location.href = '/templates/tenant-dashboard.html'; return; }
+  if(['dealer'].includes(u.role)){
+    var sn=document.getElementById('snav-new');if(sn)sn.style.display='';
+  }
+  if(['finance_team','finance_cfa_team'].includes(u.role)){
+    var ss=document.getElementById('snav-sales');if(ss)ss.style.display='';
+  }
+  document.getElementById('logout-btn').onclick=doLogout;
+  // Default batch to current month
+  var now=new Date();
+  document.getElementById('batch-id').value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+
+  document.getElementById('prev-btn').onclick=function(){if(page>1){page--;loadRecords();}};
+  document.getElementById('next-btn').onclick=function(){page++;loadRecords();};
+
+  var dz=document.getElementById('drop-zone');
+  dz.ondragover=function(e){e.preventDefault();dz.classList.add('drag');};
+  dz.ondragleave=function(){dz.classList.remove('drag');};
+  dz.ondrop=function(e){e.preventDefault();dz.classList.remove('drag');fileSelected(e.dataTransfer.files[0]);};
+
+  loadRecords();
+});
+
+function getToken(){return localStorage.getItem('access_token');}
+function getUser(){try{return JSON.parse(localStorage.getItem('user')||'null');}catch{return null;}}
+function doLogout(){localStorage.clear();window.location.href='/templates/login.html';}
+function debounce(){clearTimeout(debTimer);debTimer=setTimeout(function(){page=1;loadRecords();},350);}
+
+function fileSelected(file){
+  if(!file)return;
+  selFile=file;
+  document.getElementById('selected-file').textContent='Selected: '+file.name+' ('+Math.round(file.size/1024)+'KB)';
+}
+
+async function uploadFile(){
+  if(!selFile){alert('Please select a file first.');return;}
+  var btn=document.getElementById('upload-btn');
+  var batch=document.getElementById('batch-id').value;
+  if(!batch){alert('Please select a batch month.');return;}
+
+  btn.disabled=true;btn.textContent='Processing…';
+  document.getElementById('progress-wrap').style.display='block';
+  var fill=document.getElementById('progress-fill');
+  fill.style.width='30%';
+  document.getElementById('upload-result').innerHTML='';
+
+  var fd=new FormData();
+  fd.append('file',selFile);
+  fd.append('upload_batch',batch);
+
+  try{
+    fill.style.width='70%';
+    var res=await fetch('/api/v1/pdcn/sales-register/upload',{
+      method:'POST',headers:{'Authorization':'Bearer '+getToken()},body:fd
+    });
+    fill.style.width='100%';
+    var d=await res.json();
+    if(!res.ok)throw new Error(d.detail||'Upload failed');
+    document.getElementById('upload-result').innerHTML=
+      '<div style="padding:12px 16px;background:rgba(16,185,129,.1);border-radius:8px;border-left:3px solid #10b981;font-size:13px">'+
+      '✅ Upload complete: <strong>'+d.inserted+'</strong> records inserted, <strong>'+d.skipped_duplicates+'</strong> duplicates skipped.</div>';
+    selFile=null;document.getElementById('selected-file').textContent='';
+    loadRecords();
+  }catch(e){
+    document.getElementById('upload-result').innerHTML=
+      '<div style="padding:12px;background:rgba(239,68,68,.1);border-radius:8px;border-left:3px solid #ef4444;font-size:13px">❌ '+e.message+'</div>';
+  }
+  btn.disabled=false;btn.textContent='📤 Upload & Process';
+  fill.style.width='0%';
+  document.getElementById('progress-wrap').style.display='none';
+}
+
+async function loadRecords(){
+  var s=document.getElementById('search-inp').value;
+  var url='/pdcn/sales-register?page='+page+'&per_page='+perPage;
+  if(s)url+='&search='+encodeURIComponent(s);
+  try{
+    var res=await fetch('/api/v1'+url,{headers:{'Authorization':'Bearer '+getToken()}});
+    var d=await res.json();
+    total=d.total;
+    var tbody=document.getElementById('sr-tbody');
+    if(!d.records||!d.records.length){
+      tbody.innerHTML='<tr><td colspan="11" style="text-align:center;padding:40px;color:var(--muted)">No records uploaded yet. Upload a sales register above.</td></tr>';
+      document.getElementById('rec-count').textContent='0 records';
+      return;
+    }
+    tbody.innerHTML=d.records.map(function(r,i){
+      var date=r.invoice_date?new Date(r.invoice_date).toLocaleDateString('en-IN'):'—';
+      return '<tr><td style="color:var(--tx-3)">'+(((page-1)*perPage)+i+1)+'</td>'+
+        '<td style="font-weight:600;color:var(--primary)">'+r.invoice_no+'</td>'+
+        '<td>'+date+'</td><td>'+r.dealer_name+'</td><td>'+(r.dealer_code||'—')+'</td>'+
+        '<td>'+r.product_name+'</td><td>'+(r.product_code||'—')+'</td>'+
+        '<td>'+(r.batch_no||'—')+'</td><td style="font-weight:600">'+r.quantity+'</td>'+
+        '<td>₹'+r.rate+'</td><td style="color:var(--ink2);font-size:12px">'+r.upload_batch+'</td></tr>';
+    }).join('');
+    var pages=Math.ceil(total/perPage)||1;
+    document.getElementById('rec-count').textContent=total+' records · Page '+page+' of '+pages;
+    document.getElementById('prev-btn').disabled=(page<=1);
+    document.getElementById('next-btn').disabled=(page>=pages);
+  }catch(e){
+    document.getElementById('sr-tbody').innerHTML='<tr><td colspan="11" style="text-align:center;padding:30px;color:#ef4444">'+e.message+'</td></tr>';
+  }
+}
+
+async function exportSR(){
+  var s=document.getElementById('search-inp').value;
+  var url='/api/v1/reports/sales-register/excel?'+(s?'search='+encodeURIComponent(s):'');
+  try{
+    var res=await fetch(url,{headers:{'Authorization':'Bearer '+getToken()}});
+    if(!res.ok){alert('Export failed');return;}
+    var blob=await res.blob();var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);a.download='SalesRegister.xlsx';a.click();
+  }catch(e){alert(e.message);}
+}
+</script>
+</body>
+</html>

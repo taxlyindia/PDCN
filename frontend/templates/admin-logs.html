@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Audit Logs – PDCN CRM</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/static/css/dashboard.css"/>
+<script src="/static/js/app.js"></script>
+<style>
+  .log-tabs { display:flex;gap:4px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:4px;margin-bottom:24px;width:fit-content; }
+  .log-tab { padding:8px 20px;border-radius:8px;border:none;background:transparent;color:var(--ink2);font-size:14px;font-weight:500;cursor:pointer;font-family:'Nunito',sans-serif;transition:all 0.2s; }
+  .log-tab.active { background:var(--accent);color:#fff; }
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="icon">T</div>
+    <div>
+      <div class="name">PDCN <span>CRM</span></div><div class="badge">Platform Admin</div></div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Platform</div>
+    <a class="nav-item" href="/templates/admin-dashboard.html"><span class="nav-icon">📊</span>Dashboard</a>
+    <a class="nav-item" href="/templates/admin-tenants.html"><span class="nav-icon">🏢</span>Tenants</a>
+    <a class="nav-item" href="/templates/admin-users.html"><span class="nav-icon">👥</span>All Users</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">System</div>
+    
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar" id="sa-avatar">SA</div>
+      <div class="user-info"><div class="user-name" id="sa-name">Super Admin</div><div class="user-role">Platform Owner</div></div>
+      <button class="logout-btn" onclick="logout()">⏻</button>
+    </div>
+  </div>
+</aside>
+
+<div class="main-content">
+  <div class="topbar"><span class="topbar-title">Audit Logs</span></div>
+  <div class="page-content">
+    <div class="page-header"><h1>Audit Logs</h1><p>All platform login and activity events</p></div>
+
+    <div class="log-tabs">
+      <button class="log-tab active" onclick="switchTab('login')">Login Logs</button>
+      <button class="log-tab" onclick="switchTab('activity')">Activity Logs</button>
+    </div>
+
+    <div class="table-card">
+      <div class="table-header">
+        <h3 id="log-title">Login Logs</h3>
+      </div>
+      <div style="overflow-x:auto">
+        <table id="log-table">
+          <thead id="log-thead"></thead>
+          <tbody id="log-tbody"><tr><td class="table-empty" colspan="6">Loading…</td></tr></tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <span id="page-info">—</span>
+        <div class="pagination-btns">
+          <button class="page-btn" id="prev-btn" onclick="prevPage()">← Prev</button>
+          <button class="page-btn" id="next-btn" onclick="nextPage()">Next →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let page = 1, total = 0, perPage = 50, activeTab = 'login';
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (!requireSuperAdmin()) return;
+  const user = Auth.getUser();
+  document.getElementById('sa-name').textContent = user.full_name;
+  document.getElementById('sa-avatar').textContent = user.full_name.slice(0,2).toUpperCase();
+  loadLogs();
+});
+
+function switchTab(tab) {
+  activeTab = tab; page = 1;
+  document.querySelectorAll('.log-tab').forEach((el, i) => el.classList.toggle('active', (tab === 'login' && i === 0) || (tab === 'activity' && i === 1)));
+  document.getElementById('log-title').textContent = tab === 'login' ? 'Login Logs' : 'Activity Logs';
+  loadLogs();
+}
+
+async function loadLogs() {
+  const endpoint = activeTab === 'login' ? '/admin/logs/login' : '/admin/logs/activity';
+  try {
+    const data = await api.get(`${endpoint}?page=${page}&per_page=${perPage}`);
+    total = data.total;
+    renderLogs(data.logs);
+    updatePagination();
+  } catch(err) { showToast(err.message, 'error'); }
+}
+
+function renderLogs(logs) {
+  const tbody = document.getElementById('log-tbody');
+  const thead = document.getElementById('log-thead');
+
+  if (activeTab === 'login') {
+    thead.innerHTML = '<tr><th>#</th><th>Email</th><th>Status</th><th>IP Address</th><th>Reason</th><th>Time</th></tr>';
+    if (!logs.length) { tbody.innerHTML = '<tr><td colspan="6" class="table-empty">No logs found</td></tr>'; return; }
+    tbody.innerHTML = logs.map((l, i) => `
+      <tr>
+        <td style="color:var(--tx-3)">${(page-1)*perPage+i+1}</td>
+        <td style="font-size:13px">${l.email}</td>
+        <td>${l.success
+          ? '<span style="color:var(--success);font-weight:600">✓ Success</span>'
+          : '<span style="color:var(--error);font-weight:600">✕ Failed</span>'}</td>
+        <td style="font-size:12px;color:var(--ink2);font-family:monospace">${l.ip_address || '—'}</td>
+        <td style="font-size:12px;color:var(--muted)">${l.failure_reason || '—'}</td>
+        <td style="font-size:12px;color:var(--muted)">${formatDateTime(l.created_at)}</td>
+      </tr>
+    `).join('');
+  } else {
+    thead.innerHTML = '<tr><th>#</th><th>Action</th><th>Resource</th><th>Details</th><th>IP</th><th>Time</th></tr>';
+    if (!logs.length) { tbody.innerHTML = '<tr><td colspan="6" class="table-empty">No logs found</td></tr>'; return; }
+    tbody.innerHTML = logs.map((l, i) => `
+      <tr>
+        <td style="color:var(--tx-3)">${(page-1)*perPage+i+1}</td>
+        <td style="font-weight:600;font-size:13px">${l.action.replace(/_/g,' ')}</td>
+        <td style="font-size:12px;color:var(--muted)">${l.resource || '—'}</td>
+        <td style="font-size:12px;color:var(--ink2);max-width:200px;overflow:hidden;text-overflow:ellipsis">${l.details || '—'}</td>
+        <td style="font-size:12px;color:var(--ink2);font-family:monospace">${l.ip_address || '—'}</td>
+        <td style="font-size:12px;color:var(--muted)">${formatDateTime(l.created_at)}</td>
+      </tr>
+    `).join('');
+  }
+}
+
+function updatePagination() {
+  const pages = Math.ceil(total / perPage);
+  document.getElementById('page-info').textContent = `${total} records · Page ${page} of ${pages || 1}`;
+  document.getElementById('prev-btn').disabled = page <= 1;
+  document.getElementById('next-btn').disabled = page >= pages;
+}
+function prevPage() { if (page > 1) { page--; loadLogs(); } }
+function nextPage() { page++; loadLogs(); }
+function logout() { const r=Auth.getRefresh();if(r)api.post('/auth/logout',{refresh_token:r}).catch(()=>{});Auth.clear();window.location.href='login.html'; }
+</script>
+</body>
+</html>

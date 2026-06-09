@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Sign In – PDCN CRM</title>
+
+<script src="/static/js/app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#0f172a; --ink2:#1e293b; --ink3:#475569;
+  --gold:#f59e0b; --gold-lt:#fbbf24; --gold-light:#fbbf24;
+  --primary:#4338ca; --primary-bg:#eef2ff;
+  --cobalt:#1e1b4b; --cobalt-glow:rgba(67,56,202,.2);
+  --blue:#4338ca; --blue-light:#6366f1;
+  --text:#334155; --muted:#64748b; --muted2:#94a3b8; --white:#f8fafc;
+  --err:#dc2626; --ok:#059669; --accent:#4338ca;
+  --bg:#f8fafc; --surface:#ffffff; --border:#e2e8f0; --border-2:#cbd5e1;
+}
+body{background:#f8fafc;color:#0f172a;font-family:'Nunito',sans-serif;min-height:100vh;display:flex;overflow:hidden}
+
+/* Background */
+body::before{content:'';position:fixed;inset:0;z-index:0;
+  background:
+    radial-gradient(ellipse 70% 80% at 10% 50%,rgba(28,63,170,.06),transparent),
+    radial-gradient(ellipse 50% 60% at 90% 20%,rgba(200,146,42,.06),transparent);
+}
+body::after{content:'';position:fixed;inset:0;z-index:0;
+  background-image:linear-gradient(rgba(28,63,170,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(28,63,170,.03) 1px,transparent 1px);
+  background-size:52px 52px;
+  mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black,transparent);
+}
+
+.split{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr;min-height:100vh;width:100%}
+
+/* ── LEFT PANEL ── */
+.left{display:flex;flex-direction:column;justify-content:space-between;padding:52px 64px;position:relative;overflow:hidden;background:linear-gradient(160deg,#1e1b4b 0%,#3730a3 50%,#4338ca 100%)}
+.left::after{content:'';position:absolute;top:0;right:0;width:1px;height:100%;background:linear-gradient(180deg,transparent,rgba(255,255,255,.15),transparent)}
+
+.logo{display:flex;align-items:center;gap:12px;text-decoration:none;margin-bottom:auto}
+.logo-box{width:42px;height:42px;background:linear-gradient(135deg,#f59e0b,#fbbf24);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:18px;color:#7c2d12;flex-shrink:0}
+.logo-name{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.3rem;font-weight:600;color:#fff;letter-spacing:.02em}
+.logo-name span{color:#fbbf24}
+
+.hero-text{flex:1;display:flex;flex-direction:column;justify-content:center;padding:40px 0}
+.hero-text h1{font-family:'Plus Jakarta Sans',sans-serif;font-size:clamp(2.6rem,4vw,4rem);font-weight:300;line-height:1.1;color:#fff;margin-bottom:20px;letter-spacing:-.01em}
+.hero-text h1 em{font-style:italic;color:#fbbf24}
+.hero-text p{font-size:1rem;color:rgba(255,255,255,.7);line-height:1.75;max-width:400px;margin-bottom:40px}
+
+.feature-pills{display:flex;flex-direction:column;gap:10px}
+.pill{display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.15);border-radius:10px;transition:all .2s;backdrop-filter:blur(4px)}
+.pill:hover{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.22)}
+.pill-icon{width:32px;height:32px;border-radius:8px;background:rgba(200,146,42,.2);border:1px solid rgba(200,146,42,.3);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.pill-text{font-size:.85rem;font-weight:500;color:#fff}
+.pill-sub{font-size:.75rem;color:rgba(255,255,255,.6);margin-top:1px}
+
+.kpi-row{display:flex;gap:36px;padding-top:36px;border-top:1px solid rgba(255,255,255,.2)}
+.kpi .n{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.8rem;font-weight:600;color:#fbbf24;line-height:1}
+.kpi .l{font-size:.7rem;color:rgba(255,255,255,.6);margin-top:4px;letter-spacing:.06em;text-transform:uppercase}
+
+/* ── RIGHT PANEL ── */
+.right{display:flex;align-items:center;justify-content:center;padding:52px 64px;background:#F8FAFC}
+.auth-card{width:100%;max-width:420px;background:#fff;border-top:4px solid var(--primary);border-left:1px solid #E2E8F0;border-right:1px solid #E2E8F0;border-bottom:1px solid #E2E8F0;border-radius:20px;padding:44px 40px;box-shadow:0 8px 40px rgba(15,23,42,.1),0 2px 8px rgba(15,23,42,.06);animation:riseIn .5s cubic-bezier(.16,1,.3,1)}
+@keyframes riseIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+.tab-row{display:flex;background:#eef2ff;border-radius:9px;padding:4px;margin-bottom:28px;border:1.5px solid rgba(67,56,202,.2)}
+.tab-btn{flex:1;padding:9px;border:none;background:transparent;color:var(--ink2);font-family:'Nunito',sans-serif;font-size:.875rem;font-weight:500;border-radius:7px;cursor:pointer;transition:all .2s}
+.tab-btn.active{background:#4338ca;color:#fff;font-weight:700}
+
+.auth-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.75rem;font-weight:600;color:var(--ink);margin-bottom:5px}
+.auth-sub{font-size:.875rem;color:#475569;margin-bottom:28px;line-height:1.5}
+
+.fg{margin-bottom:16px}
+.fl{display:block;font-size:.75rem;font-weight:600;color:var(--ink2);letter-spacing:.06em;text-transform:uppercase;margin-bottom:7px}
+.fi{width:100%;padding:11px 14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;color:var(--ink);font-size:.9rem;font-family:'Nunito',sans-serif;outline:none;transition:border-color .2s}
+.fi:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(67,56,202,.1)}
+.fi::placeholder{color:var(--muted2)}
+
+.pw-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+.forgot{display:block;text-align:right;font-size:.8rem;color:#4338ca;text-decoration:none;margin-top:6px;transition:opacity .2s}
+.forgot:hover{opacity:.75}
+
+.btn-submit{width:100%;padding:13px;background:linear-gradient(135deg,#4338ca,#6366f1);color:#fff;font-family:'Nunito',sans-serif;font-weight:700;font-size:.9rem;border:none;border-radius:9px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:.02em}
+.btn-submit:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(200,146,42,.4)}
+.btn-submit:disabled{opacity:.6;cursor:not-allowed;transform:none}
+
+.divider-or{display:flex;align-items:center;gap:12px;margin:18px 0}
+.divider-or::before,.divider-or::after{content:'';flex:1;height:1px;background:#E2E8F0}
+.divider-or span{font-size:.75rem;color:#94A3B8}
+
+.btn-google{width:100%;padding:11px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:9px;color:var(--ink);font-family:'Nunito',sans-serif;font-size:.875rem;font-weight:500;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:10px}
+.btn-google:hover{border-color:#4338ca;background:#eef2ff}
+
+.err-box{background:#FEF2F2;border:1px solid rgba(220,38,38,.2);color:#DC2626;padding:10px 14px;border-radius:8px;font-size:.825rem;margin-bottom:16px;display:none;line-height:1.5}
+.switch-note{text-align:center;font-size:.825rem;color:var(--ink2);margin-top:18px}
+.switch-note a{color:#4338ca;text-decoration:none;font-weight:500}
+.switch-note a:hover{opacity:.8}
+
+.trial-note{margin-top:16px;padding:10px 14px;background:#EEF2FF;border:1px solid rgba(28,63,170,.15);border-radius:8px;font-size:.78rem;color:var(--ink3);text-align:center;line-height:1.5}
+.trial-note strong{color:var(--blue)}
+
+/* back to site */
+.back-link{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;color:var(--ink2);text-decoration:none;transition:color .2s;margin-bottom:auto}
+.back-link:hover{color:var(--gold)}
+
+@media(max-width:860px){
+  .split{grid-template-columns:1fr}
+  .left{display:none}
+  .right{padding:32px 24px}
+}
+</style>
+</head>
+<body>
+<div class="split">
+  <!-- LEFT -->
+  <div class="left">
+    <a href="/" class="logo">
+      <div class="logo-box">T</div>
+      <div class="logo-name">PDCN <span>CRM</span></div>
+    </a>
+
+    <div class="hero-text">
+      <h1>PDCN Claims.<br/>Done <em>right.</em><br/>Done <em>fast.</em></h1>
+      <p>PDCN CRM's enterprise PDCN Workflow Platform manages your entire Price Differential Credit Note lifecycle — from dealer submission to credit note issuance — with complete audit trail and zero leakage.</p>
+
+      <div class="feature-pills">
+        <div class="pill">
+          <div class="pill-icon">📋</div>
+          <div><div class="pill-text">5-Stage Approval Workflow</div><div class="pill-sub">Dealer → CN Team → Finance → CFA → Closed</div></div>
+        </div>
+        <div class="pill">
+          <div class="pill-icon">🛡️</div>
+          <div><div class="pill-text">Role-Based Access Control</div><div class="pill-sub">Every role sees only what they need to act on</div></div>
+        </div>
+        <div class="pill">
+          <div class="pill-icon">📊</div>
+          <div><div class="pill-text">Sales Register Validation</div><div class="pill-sub">System blocks over-claiming before it happens</div></div>
+        </div>
+        <div class="pill">
+          <div class="pill-icon">🎬</div>
+          <div><div class="pill-text">Video Evidence Attachment</div><div class="pill-sub">Upload proof videos directly on claims</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi"><div class="n">5</div><div class="l">Approval Stages</div></div>
+      <div class="kpi"><div class="n">100%</div><div class="l">Audit Trail</div></div>
+      <div class="kpi"><div class="n">0</div><div class="l">Duplicate Claims</div></div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right">
+    <div class="auth-card">
+      <!-- Back to Home -->
+      <a href="/" style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:#64748b;text-decoration:none;margin-bottom:18px;padding:6px 12px;border-radius:7px;border:1.5px solid #e2e8f0;background:#f8fafc;transition:all .2s;font-family:Nunito,sans-serif" onmouseover="this.style.borderColor='#4338ca';this.style.color='#4338ca';this.style.background='#eef2ff'" onmouseout="this.style.borderColor='#e2e8f0';this.style.color='#64748b';this.style.background='#f8fafc'">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M10 3L5 8l5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Back to Home
+      </a>
+      <div id="login-section">
+        <div class="tab-row">
+          <button class="tab-btn active" onclick="showLogin()">Sign In</button>
+          <button class="tab-btn" onclick="showSignup()">Register</button>
+        </div>
+        <div class="auth-title">Welcome back</div>
+        <div class="auth-sub">Sign in to your PDCN CRM account</div>
+        <div class="err-box" id="login-error"></div>
+        <form id="login-form">
+          <div class="fg"><label class="fl">Email Address</label><input class="fi" type="email" id="login-email" placeholder="you@company.com" required/></div>
+          <div class="fg">
+            <label class="fl">Password</label>
+            <input class="fi" type="password" id="login-password" placeholder="••••••••" required/>
+            <a href="/templates/forgot-password.html" class="forgot">Forgot password?</a>
+          </div>
+          <button type="submit" class="btn-submit" id="login-btn">Sign In →</button>
+        </form>
+        <div class="divider-or"><span>or</span></div>
+        <button class="btn-google" onclick="googleLogin()">
+          <svg width="17" height="17" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+          Continue with Google
+        </button>
+        <div class="switch-note">New to PDCN CRM? <a href="#" onclick="showSignup()">Create free account</a></div>
+      </div>
+
+      <div id="signup-section" style="display:none">
+        <div class="tab-row">
+          <button class="tab-btn" onclick="showLogin()">Sign In</button>
+          <button class="tab-btn active" onclick="showSignup()">Register</button>
+        </div>
+        <div class="auth-title">Start your trial</div>
+        <div class="auth-sub">14 days free — full access, no credit card needed</div>
+        <div class="err-box" id="signup-error"></div>
+        <form id="signup-form">
+          <div class="fg"><label class="fl">Company / Organisation</label><input class="fi" type="text" id="su-company" placeholder="e.g. Ravi Pharmaceuticals Pvt. Ltd." required/></div>
+          <div class="fg"><label class="fl">Your Full Name</label><input class="fi" type="text" id="su-name" placeholder="e.g. Rahul Sharma" required/></div>
+          <div class="fg"><label class="fl">Work Email</label><input class="fi" type="email" id="su-email" placeholder="rahul@company.com" required/></div>
+          <div class="fg"><label class="fl">Mobile Number</label><input class="fi" type="tel" id="su-mobile" placeholder="+91 98765 43210"/></div>
+          <div class="pw-row">
+            <div class="fg"><label class="fl">Password</label><input class="fi" type="password" id="su-password" placeholder="Min 8 chars" required/></div>
+            <div class="fg"><label class="fl">Confirm</label><input class="fi" type="password" id="su-confirm" placeholder="Repeat" required/></div>
+          </div>
+          <button type="submit" class="btn-submit" id="signup-btn">Create Account →</button>
+        </form>
+        <div class="trial-note">✓ <strong>14-day free trial</strong> · Full 5-stage PDCN workflow · No credit card required · All prices exclude GST</div>
+        <div class="switch-note">Already registered? <a href="#" onclick="showLogin()">Sign in</a></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+window.addEventListener('DOMContentLoaded', () => {
+  if (Auth.isLoggedIn()) {
+    const u = Auth.getUser();
+    if (u.role === 'super_admin') window.location.href = '/templates/admin-dashboard.html';
+    else if (u.role === 'tenant_admin') window.location.href = '/templates/tenant-dashboard.html';
+    else window.location.href = '/templates/pdcn-dashboard.html';
+  }
+});
+
+function showLogin(){ document.getElementById('login-section').style.display=''; document.getElementById('signup-section').style.display='none'; }
+function showSignup(){ document.getElementById('login-section').style.display='none'; document.getElementById('signup-section').style.display=''; }
+function showErr(id,msg){ const el=document.getElementById(id); el.textContent=msg; el.style.display='block'; }
+function hideErr(id){ document.getElementById(id).style.display='none'; }
+
+document.getElementById('login-form').addEventListener('submit', async e => {
+  e.preventDefault(); hideErr('login-error');
+  const btn = document.getElementById('login-btn');
+  setLoading(btn, true);
+  try {
+    const data = await api('/auth/login', { method:'POST', body:JSON.stringify({ email: document.getElementById('login-email').value, password: document.getElementById('login-password').value }) });
+    Auth.save(data);
+    showToast('Welcome back, ' + data.user.full_name + '!', 'success');
+    setTimeout(() => {
+      if (data.user.role === 'super_admin') window.location.href = '/templates/admin-dashboard.html';
+      else if (data.user.role === 'tenant_admin') window.location.href = '/templates/tenant-dashboard.html';
+      else window.location.href = '/templates/pdcn-dashboard.html';
+    }, 500);
+  } catch(err) { showErr('login-error', err.message); }
+  finally { setLoading(btn, false); }
+});
+
+document.getElementById('signup-form').addEventListener('submit', async e => {
+  e.preventDefault(); hideErr('signup-error');
+  const btn = document.getElementById('signup-btn');
+  setLoading(btn, true);
+  try {
+    await api('/auth/signup', { method:'POST', body:JSON.stringify({
+      company_name: document.getElementById('su-company').value,
+      full_name: document.getElementById('su-name').value,
+      email: document.getElementById('su-email').value,
+      mobile: document.getElementById('su-mobile').value || null,
+      password: document.getElementById('su-password').value,
+      confirm_password: document.getElementById('su-confirm').value,
+    })});
+    showToast('Account created! Your 14-day trial is now active.', 'success');
+    setTimeout(() => showLogin(), 1500);
+  } catch(err) { showErr('signup-error', err.message); }
+  finally { setLoading(btn, false); }
+});
+
+async function googleLogin() {
+  try { const data = await api('/auth/google/login', {method:'GET'}); window.location.href = data.authorization_url; }
+  catch(err) { showToast('Google login not configured', 'error'); }
+}
+</script>
+</body>
+</html>

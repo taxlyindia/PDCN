@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Generate Credit Note – PDCN CRM</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/static/css/dashboard.css"/>
+<script src="/static/js/app.js"></script>
+<style>
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px}
+.card-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:700;margin-bottom:18px;color:var(--primary)}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-label{font-size:12px;font-weight:600;color:var(--ink2);text-transform:uppercase;letter-spacing:.04em}
+.form-input,.form-textarea{padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--primary-bg);color:var(--ink);font-size:14px;font-family:'Nunito',sans-serif;width:100%;box-sizing:border-box}
+.form-input:focus,.form-textarea:focus{outline:none;border-color:var(--blue)}
+.form-textarea{min-height:80px;resize:vertical}
+.upload-zone{border:2px dashed var(--border);border-radius:10px;padding:32px;text-align:center;cursor:pointer;transition:all .2s}
+.upload-zone:hover{border-color:var(--blue);background:var(--blue-pale)}
+.btn{padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;border:none;cursor:pointer;transition:all .2s}
+.btn-success{background:#10b981;color:#fff}.btn-success:hover{background:#059669}
+.btn-ghost{background:var(--primary-bg);color:var(--ink2);border:1px solid var(--border)}
+.claim-summary{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:4px}
+.sum-item{background:rgba(99,102,241,.06);border-radius:8px;padding:10px 12px}
+.sum-label{font-size:11px;color:var(--ink2);margin-bottom:3px}
+.sum-val{font-size:15px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="icon">T</div>
+    <div>
+      <div class="name">PDCN <span>CRM</span></div>
+      <div class="badge">Workflow</div>
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">PDCN Workflow</div>
+    <a class="nav-item" href="/templates/pdcn-dashboard.html" id="snav-dashboard"><span class="nav-icon">📊</span>Dashboard</a>
+    <a class="nav-item active"><span class="nav-icon">📄</span>Generate CN</a>
+    <a class="nav-item" href="/templates/pdcn-sales-register.html" id="snav-sales" style="display:none"><span class="nav-icon">📊</span>Sales Register</a>
+      <a class="nav-item" href="/templates/chat.html"><span class="nav-icon">💬</span>Chat <span id="chat-unread-badge" style="display:none;background:#ef4444;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:4px">0</span></a>
+    <a class="nav-item" href="/templates/pdcn-sales-template.html" id="snav-template"><span class="nav-icon">📥</span>Templates &amp; Reports</a>
+    <a class="nav-item" href="/templates/help-videos.html"><span class="nav-icon">🎓</span>Help &amp; Training</a>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar" id="t-avatar">U</div>
+      <div class="user-info"><div class="user-name" id="t-name">User</div><div class="user-role" id="t-role">—</div></div>
+      <button class="logout-btn" id="logout-btn">⏻</button>
+    </div>
+  </div>
+</aside>
+
+<div class="main-content">
+  <div class="topbar">
+    <span class="topbar-title">Generate Credit Note</span>
+    <button class="btn btn-ghost" onclick="history.back()">← Back</button>
+  </div>
+  <div class="page-content">
+    <!-- Claim Summary -->
+    <div class="card">
+      <div class="card-title">📦 Claim Summary</div>
+      <div class="claim-summary" id="claim-summary">
+        <div style="color:var(--ink2);font-size:13px">Loading…</div>
+      </div>
+    </div>
+
+    <!-- Credit Note Form -->
+    <div class="card">
+      <div class="card-title">✅ Credit Note Details</div>
+      <div class="form-grid" style="margin-bottom:16px">
+        <div class="form-group">
+          <label class="form-label">CN Number *</label>
+          <input class="form-input" id="cn-number" placeholder="e.g. CN-2024-001"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">CN Date *</label>
+          <input class="form-input" id="cn-date" type="date"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">CN Amount (₹) *</label>
+          <input class="form-input" id="cn-amount" type="number" step="0.01" placeholder="0.00"/>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:16px">
+        <label class="form-label">Remarks</label>
+        <textarea class="form-textarea" id="cn-remarks" placeholder="Optional remarks…"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Upload Credit Note PDF (Optional)</label>
+        <div class="upload-zone" id="upload-zone" onclick="document.getElementById('cn-file').click()">
+          <div style="font-size:32px">📄</div>
+          <p style="color:var(--ink2);font-size:13px;margin:8px 0 0">Click to upload Credit Note PDF</p>
+          <div id="file-name" style="color:var(--primary);font-size:13px;margin-top:8px"></div>
+        </div>
+        <input type="file" id="cn-file" style="display:none" accept=".pdf,.jpg,.jpeg,.png" onchange="handleFile(this.files[0])"/>
+      </div>
+
+      <div id="cn-error" style="color:#ef4444;font-size:13px;margin-top:12px;display:none"></div>
+
+      <div style="display:flex;gap:12px;margin-top:20px">
+        <button class="btn btn-success" id="gen-btn" onclick="generateCN()">✅ Generate Credit Note</button>
+        <button class="btn btn-ghost" onclick="history.back()">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var claimId=null,selectedFile=null;
+
+document.addEventListener('DOMContentLoaded',function(){
+  var u=getUser();
+  if(!u||!getToken()){window.location.href='/templates/login.html';return;}
+  document.getElementById('t-name').textContent=u.full_name||'';
+  document.getElementById('t-avatar').textContent=(u.full_name||'U').slice(0,2).toUpperCase();
+  document.getElementById('t-role').textContent=(u.role||'').replace(/_/g,' ');
+
+  // Role-based nav — show only what this role needs, redirect admin
+  if(u.role === 'tenant_admin'){ window.location.href = '/templates/tenant-dashboard.html'; return; }
+  if(['dealer'].includes(u.role)){
+    var sn=document.getElementById('snav-new');if(sn)sn.style.display='';
+  }
+  if(['finance_team','finance_cfa_team'].includes(u.role)){
+    var ss=document.getElementById('snav-sales');if(ss)ss.style.display='';
+  }
+  document.getElementById('logout-btn').onclick=doLogout;
+
+  var params=new URLSearchParams(window.location.search);
+  claimId=params.get('id');
+  if(!claimId){document.getElementById('claim-summary').innerHTML='<div style="color:#ef4444">No claim ID specified</div>';return;}
+  loadClaim();
+
+  // Set today as default CN date
+  document.getElementById('cn-date').value=new Date().toISOString().split('T')[0];
+});
+
+function getToken(){return localStorage.getItem('access_token');}
+function getUser(){try{return JSON.parse(localStorage.getItem('user')||'null');}catch{return null;}}
+function doLogout(){localStorage.clear();window.location.href='/templates/login.html';}
+
+async function loadClaim(){
+  try{
+    var res=await fetch('/api/v1/pdcn/claims/'+claimId,{headers:{'Authorization':'Bearer '+getToken()}});
+    var c=await res.json();
+    document.getElementById('claim-summary').innerHTML=
+      '<div class="sum-item"><div class="sum-label">Claim No</div><div class="sum-val" style="color:var(--primary)">'+c.claim_no+'</div></div>'+
+      '<div class="sum-item"><div class="sum-label">Dealer</div><div class="sum-val">'+c.dealer_name+'</div></div>'+
+      '<div class="sum-item"><div class="sum-label">Total Qty</div><div class="sum-val">'+c.total_qty+'</div></div>'+
+      '<div class="sum-item"><div class="sum-label">Claim Amount</div><div class="sum-val" style="color:#10b981">₹'+c.total_amount+'</div></div>'+
+      '<div class="sum-item"><div class="sum-label">Status</div><div class="sum-val" style="color:#f59e0b;font-size:13px">'+c.status.replace(/_/g,' ').toUpperCase()+'</div></div>';
+    // Pre-fill CN amount
+    document.getElementById('cn-amount').value=c.total_amount;
+  }catch(e){
+    document.getElementById('claim-summary').innerHTML='<div style="color:#ef4444">'+e.message+'</div>';
+  }
+}
+
+function handleFile(file){
+  if(!file)return;
+  if(file.size>10*1024*1024){alert('File too large (max 10MB)');return;}
+  selectedFile=file;
+  document.getElementById('file-name').textContent='Selected: '+file.name;
+}
+
+async function generateCN(){
+  var btn=document.getElementById('gen-btn');
+  var errEl=document.getElementById('cn-error');errEl.style.display='none';
+  var cnNo=document.getElementById('cn-number').value.trim();
+  var cnDate=document.getElementById('cn-date').value;
+  var cnAmt=document.getElementById('cn-amount').value.trim();
+  if(!cnNo){errEl.textContent='CN Number is required.';errEl.style.display='block';return;}
+  if(!cnDate){errEl.textContent='CN Date is required.';errEl.style.display='block';return;}
+  if(!cnAmt){errEl.textContent='CN Amount is required.';errEl.style.display='block';return;}
+
+  btn.disabled=true;btn.textContent='Generating…';
+  var fd=new FormData();
+  fd.append('cn_number',cnNo);
+  fd.append('cn_date',cnDate);
+  fd.append('cn_amount',cnAmt);
+  fd.append('remarks',document.getElementById('cn-remarks').value||'');
+  if(selectedFile)fd.append('file',selectedFile);
+
+  try{
+    var res=await fetch('/api/v1/pdcn/claims/'+claimId+'/credit-note',{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+getToken()},
+      body:fd
+    });
+    if(!res.ok){var e=await res.json();throw new Error(e.detail||'Failed');}
+    alert('Credit Note '+cnNo+' generated successfully!');
+    window.location.href='/templates/pdcn-claim-detail.html?id='+claimId;
+  }catch(e){
+    errEl.textContent=e.message;errEl.style.display='block';
+    btn.disabled=false;btn.textContent='✅ Generate Credit Note';
+  }
+}
+</script>
+</body>
+</html>

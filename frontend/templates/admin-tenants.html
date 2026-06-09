@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Tenant Management – PDCN CRM</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/static/css/dashboard.css"/>
+<script src="/static/js/app.js"></script>
+<style>
+/* ── Usage bars ── */
+.usage-wrap{display:flex;flex-direction:column;gap:6px}
+.usage-row{display:flex;align-items:center;gap:8px;font-size:12px}
+.usage-label{width:56px;color:var(--tx-3);font-weight:600;flex-shrink:0}
+.usage-track{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.usage-fill{height:100%;border-radius:3px;transition:width .4s}
+.usage-num{width:52px;text-align:right;font-size:11.5px;font-weight:700;color:var(--tx-3);flex-shrink:0}
+.fill-ok{background:linear-gradient(90deg,var(--green),#34d399)}
+.fill-warn{background:linear-gradient(90deg,var(--amber),#fbbf24)}
+.fill-over{background:linear-gradient(90deg,var(--red),#f87171)}
+
+/* ── Tenant cards in modal ── */
+.user-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.user-row:last-child{border-bottom:none}
+.u-init{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:800;color:#fff;flex-shrink:0}
+.u-info{flex:1;min-width:0}
+.u-name{font-size:13.5px;font-weight:700;color:var(--tx-2)}
+.u-email{font-size:12px;color:var(--tx-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.u-role{font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;flex-shrink:0}
+
+/* ── Plan cards in picker ── */
+.plan-card{border:2px solid var(--border);border-radius:14px;padding:18px;cursor:pointer;transition:all .2s;position:relative}
+.plan-card:hover{border-color:var(--primary);background:var(--primary-bg)}
+.plan-card.selected{border-color:var(--primary);background:var(--primary-bg);box-shadow:0 0 0 3px rgba(79,70,229,.12)}
+.plan-card.featured{border-color:var(--violet)}
+.plan-card.selected.featured{border-color:var(--violet);background:#fdf4ff;box-shadow:0 0 0 3px rgba(124,58,237,.12)}
+.plan-name{font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:800;color:var(--tx-2)}
+.plan-price{font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;font-weight:800;color:var(--primary);line-height:1}
+.plan-limit{font-size:11px;color:var(--tx-3);margin-top:6px}
+
+/* ── Modal override — larger for this page ── */
+.modal-lg{max-width:680px}
+.modal-xl{max-width:820px}
+
+/* ── Status toggle btn ── */
+.btn-toggle-status{padding:5px 12px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid;transition:all .18s}
+.btn-enable{background:#d1fae5;color:#059669;border-color:rgba(5,150,105,.3)}
+.btn-enable:hover{background:#059669;color:#fff}
+.btn-disable{background:#fee2e2;color:#dc2626;border-color:rgba(220,38,38,.3)}
+.btn-disable:hover{background:#dc2626;color:#fff}
+
+/* ── Stat strip ── */
+.stat-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:22px}
+.ss-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--rl);padding:16px 18px;box-shadow:var(--s0);cursor:pointer;transition:all .18s}
+.ss-card:hover{border-color:var(--primary);background:var(--primary-bg);transform:translateY(-2px)}
+.ss-card.active-filter{border-color:var(--primary);background:var(--primary-bg);box-shadow:0 0 0 3px rgba(79,70,229,.1)}
+.ss-num{font-family:'Plus Jakarta Sans',sans-serif;font-size:26px;font-weight:800;line-height:1;margin-bottom:4px}
+.ss-lbl{font-size:11.5px;color:var(--tx-3);font-weight:600}
+
+/* ── Warning banner ── */
+.warn-banner{background:#fff7ed;border:1.5px solid rgba(234,88,12,.25);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--orange);display:flex;align-items:flex-start;gap:10px;margin-bottom:16px}
+</style>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══════════════════════════════════════════════ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="icon">T</div>
+    <div><div class="name">PDCN <span>CRM</span></div><div class="badge">Platform Admin</div></div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Platform</div>
+    <a class="nav-item" href="/templates/admin-dashboard.html"><span class="nav-icon">◈</span>Dashboard</a>
+    <a class="nav-item active" href="/templates/admin-tenants.html"><span class="nav-icon">◉</span>Tenants</a>
+    <a class="nav-item" href="/templates/admin-users.html"><span class="nav-icon">◎</span>All Users</a>
+    <a class="nav-item" href="/templates/admin-pricing.html"><span class="nav-icon">💰</span>Pricing Plans</a>
+    <a class="nav-item" href="/templates/admin-videos.html"><span class="nav-icon">🎬</span>Knowledge Videos</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">System</div>
+    <a class="nav-item" href="/templates/admin-logs.html"><span class="nav-icon">◌</span>Audit Logs</a>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar" id="sa-avatar">SA</div>
+      <div class="user-info">
+        <div class="user-name" id="sa-name">Super Admin</div>
+        <div class="user-role">Platform Owner</div>
+      </div>
+      <button class="logout-btn" onclick="logout()">⏻</button>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══ MAIN ════════════════════════════════════════════════════ -->
+<div class="main-content">
+  <div class="topbar">
+    <span class="topbar-title">Tenant Management</span>
+    <div style="display:flex;gap:10px;align-items:center">
+      <div class="topbar-search">
+        <span style="color:var(--tx-4)">⌕</span>
+        <input type="text" id="search" placeholder="Search company or email…" oninput="debounceLoad()"/>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="loadTenants()">↺ Refresh</button>
+    </div>
+  </div>
+
+  <div class="page-content">
+
+    <!-- Stat strip — clickable filters -->
+    <div class="stat-strip">
+      <div class="ss-card" id="ss-all" onclick="setStatusFilter('')">
+        <div class="ss-num" id="ss-total" style="color:var(--primary)">—</div>
+        <div class="ss-lbl">All Tenants</div>
+      </div>
+      <div class="ss-card" id="ss-active" onclick="setStatusFilter('active')">
+        <div class="ss-num" style="color:var(--green)">—</div>
+        <div class="ss-lbl">Active</div>
+      </div>
+      <div class="ss-card" id="ss-trial" onclick="setStatusFilter('trial')">
+        <div class="ss-num" style="color:var(--amber)">—</div>
+        <div class="ss-lbl">Trial</div>
+      </div>
+      <div class="ss-card" id="ss-pending" onclick="setStatusFilter('pending')">
+        <div class="ss-num" style="color:var(--blue)">—</div>
+        <div class="ss-lbl">Pending</div>
+      </div>
+      <div class="ss-card" id="ss-disabled" onclick="setStatusFilter('disabled')">
+        <div class="ss-num" style="color:var(--red)">—</div>
+        <div class="ss-lbl">Disabled</div>
+      </div>
+    </div>
+
+    <!-- Filters row -->
+    <div class="table-card" style="padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <select class="filter-select" id="status-filter" onchange="loadTenants()">
+        <option value="">All Status</option>
+        <option value="active">Active</option>
+        <option value="trial">Trial</option>
+        <option value="pending">Pending</option>
+        <option value="disabled">Disabled</option>
+      </select>
+      <select class="filter-select" id="plan-filter" onchange="loadTenants()">
+        <option value="">All Plans</option>
+      </select>
+      <span id="result-count" style="font-size:13px;color:var(--tx-3);margin-left:auto">Loading…</span>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Company</th>
+              <th>Status</th>
+              <th>Plan</th>
+              <th>Usage</th>
+              <th>Users</th>
+              <th>Joined</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tenants-body">
+            <tr><td colspan="7" class="table-empty">Loading tenants…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination" id="pagination" style="display:none">
+        <span id="page-info">—</span>
+        <div class="pagination-btns" id="page-btns"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     TENANT DETAIL MODAL — users + usage + plan assignment
+════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="detail-modal">
+  <div class="modal modal-xl">
+    <!-- Header -->
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px">
+      <div>
+        <h2 id="dm-company">Tenant Name</h2>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
+          <span id="dm-status-badge"></span>
+          <span id="dm-plan-badge" style="font-size:12px;padding:3px 10px;border-radius:12px;background:var(--primary-bg);color:var(--primary);font-weight:700;border:1px solid var(--blue-border)">No plan</span>
+          <span id="dm-admin-email" style="font-size:12px;color:var(--tx-3)"></span>
+        </div>
+      </div>
+      <button onclick="closeModal('detail-modal')" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--tx-3)">✕</button>
+    </div>
+
+    <!-- Warning if over limit -->
+    <div id="dm-warn" class="warn-banner" style="display:none">
+      <span style="font-size:18px;flex-shrink:0">⚠</span>
+      <span id="dm-warn-text"></span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+
+      <!-- LEFT: Usage + Quick actions -->
+      <div>
+        <!-- Usage bars -->
+        <div class="table-card" style="padding:20px;margin-bottom:16px">
+          <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;color:var(--tx-2);margin-bottom:14px">📊 Plan Usage</div>
+          <div class="usage-wrap" id="dm-usage">
+            <div style="color:var(--tx-4);font-size:13px">No plan assigned</div>
+          </div>
+          <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
+            <div style="font-size:12px;color:var(--tx-3);margin-bottom:8px;font-weight:600">BILLING CYCLE</div>
+            <div id="dm-billing" style="font-size:13px;font-weight:600;color:var(--tx-2)">—</div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="table-card" style="padding:20px">
+          <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;color:var(--tx-2);margin-bottom:14px">⚡ Quick Actions</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <button class="btn btn-success btn-sm" style="justify-content:flex-start;gap:8px" onclick="activateTenant()" id="btn-activate">✓ Activate Tenant</button>
+            <button class="btn btn-warning btn-sm" style="justify-content:flex-start;gap:8px" onclick="openExtendTrial()" id="btn-trial">⏱ Extend Trial</button>
+            <button class="btn btn-danger btn-sm" style="justify-content:flex-start;gap:8px" onclick="suspendTenant()" id="btn-suspend">⊘ Suspend Tenant</button>
+            <button class="btn btn-primary btn-sm" style="justify-content:flex-start;gap:8px" onclick="openPlanModal()">💰 Change Plan</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Users list -->
+      <div class="table-card" style="padding:20px;overflow-y:auto;max-height:420px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;color:var(--tx-2)">👥 Users</div>
+          <span id="dm-user-count-badge" style="font-size:12px;font-weight:700;padding:3px 10px;border-radius:12px;background:var(--surface-2);color:var(--tx-3);border:1px solid var(--border)">0 users</span>
+        </div>
+        <div id="dm-users">
+          <div style="color:var(--tx-4);font-size:13px">Loading users…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Extend trial inline form -->
+    <div id="extend-trial-form" style="display:none;margin-top:16px;padding:18px;background:var(--amber-l);border:1px solid var(--amber-t);border-radius:10px">
+      <div style="font-size:13.5px;font-weight:700;color:var(--amber);margin-bottom:10px">⏱ Extend Trial</div>
+      <div style="display:flex;gap:10px;align-items:flex-end">
+        <div>
+          <label class="form-label" style="color:var(--amber)">Days to add</label>
+          <input class="form-input" id="trial-days" type="number" min="1" max="365" value="14" style="width:120px"/>
+        </div>
+        <button class="btn btn-warning" onclick="extendTrial()">Extend</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('extend-trial-form').style.display='none'">Cancel</button>
+      </div>
+    </div>
+
+    <div class="modal-footer" style="padding-top:16px;margin-top:4px">
+      <button class="btn btn-ghost" onclick="closeModal('detail-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PLAN ASSIGNMENT MODAL ════════════════════════════════ -->
+<div class="modal-overlay" id="plan-modal">
+  <div class="modal modal-lg">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div>
+        <h2>Assign Pricing Plan</h2>
+        <p style="font-size:13px;color:var(--tx-3);margin:4px 0 0">Select a plan for <strong id="pm-company">—</strong></p>
+      </div>
+      <button onclick="closeModal('plan-modal')" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--tx-3)">✕</button>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <label class="form-label">Billing Cycle</label>
+      <div style="display:flex;gap:8px">
+        <button class="role-pill active" id="cycle-monthly" onclick="setCycle('monthly',this)">Monthly</button>
+        <button class="role-pill" id="cycle-annual" onclick="setCycle('annual',this)">Annual (20% off)</button>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px" id="plan-list">
+      <div style="color:var(--tx-4);font-size:13px">Loading plans…</div>
+    </div>
+
+    <div id="pm-warn" class="warn-banner" style="display:none;margin-top:14px">
+      <span style="font-size:18px;flex-shrink:0">⚠</span>
+      <span id="pm-warn-text"></span>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('plan-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="assignPlan()">Assign Plan</button>
+    </div>
+  </div>
+</div>
+
+<style>
+.role-pill{padding:6px 14px;border-radius:20px;border:1.5px solid var(--border-2);background:var(--surface);
+  color:var(--tx-3);font-size:12.5px;font-weight:600;cursor:pointer;transition:all .18s;font-family:'Nunito',sans-serif}
+.role-pill.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+</style>
+
+<script>
+var page = 1, pageSize = 15, statusFilter = '', planFilter = '';
+var searchTimer = null;
+var allPlans = [];
+var activeTenantId = null;
+var activeTenantData = null;
+var selectedPlanId = null;
+var billingCycle = 'monthly';
+
+// ── Init ──────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', async function(){
+  if(!requireAuth()) return;
+  var u = Auth.getUser();
+  if(!u || u.role !== 'super_admin'){ window.location.href='/templates/login.html'; return; }
+  document.getElementById('sa-name').textContent = u.full_name || 'Super Admin';
+  document.getElementById('sa-avatar').textContent = (u.full_name||'SA').slice(0,2).toUpperCase();
+  await Promise.all([loadPlans(), loadStats(), loadTenants()]);
+});
+
+// ── Load pricing plans for filter + modal ─────────────────────
+async function loadPlans(){
+  try{
+    allPlans = await api('/pricing/plans');
+    // Populate filter
+    var sel = document.getElementById('plan-filter');
+    allPlans.forEach(function(p){
+      var o = document.createElement('option');
+      o.value = p.id; o.textContent = p.name;
+      sel.appendChild(o);
+    });
+  }catch(e){ console.warn('loadPlans',e); }
+}
+
+// ── Load stats strip ──────────────────────────────────────────
+async function loadStats(){
+  try{
+    var d = await api('/admin/dashboard');
+    document.querySelectorAll('.ss-num')[0].textContent = d.total_tenants;
+    document.querySelectorAll('.ss-num')[1].textContent = d.active_tenants;
+    document.querySelectorAll('.ss-num')[2].textContent = d.trial_tenants;
+    document.querySelectorAll('.ss-num')[3].textContent = d.pending_tenants;
+    document.querySelectorAll('.ss-num')[4].textContent = d.disabled_tenants;
+  }catch(e){}
+}
+
+// ── Set status filter from stats strip ───────────────────────
+function setStatusFilter(s){
+  statusFilter = s;
+  document.getElementById('status-filter').value = s;
+  document.querySelectorAll('.ss-card').forEach(function(c){ c.classList.remove('active-filter'); });
+  var map = {'':'ss-all','active':'ss-active','trial':'ss-trial','pending':'ss-pending','disabled':'ss-disabled'};
+  if(map[s]) document.getElementById(map[s]).classList.add('active-filter');
+  page = 1;
+  loadTenants();
+}
+
+// ── Load tenants table ─────────────────────────────────────────
+async function loadTenants(){
+  statusFilter = document.getElementById('status-filter').value;
+  planFilter = document.getElementById('plan-filter').value;
+  var search = document.getElementById('search').value.trim();
+  var params = '?page='+page+'&per_page='+pageSize;
+  if(statusFilter) params += '&status='+statusFilter;
+  if(search) params += '&search='+encodeURIComponent(search);
+
+  try{
+    var data = await api('/admin/tenants'+params);
+    renderTable(data);
+    document.getElementById('result-count').textContent = data.total + ' tenant' + (data.total!==1?'s':'');
+    loadStats(); // refresh counts
+  }catch(e){
+    document.getElementById('tenants-body').innerHTML = '<tr><td colspan="7" class="table-empty">Error: '+e.message+'</td></tr>';
+  }
+}
+
+function debounceLoad(){
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(loadTenants, 320);
+}
+
+// ── Render table ──────────────────────────────────────────────
+function renderTable(data){
+  var tenants = data.tenants || [];
+  var tbody = document.getElementById('tenants-body');
+
+  if(!tenants.length){
+    tbody.innerHTML = '<tr><td colspan="7" class="table-empty">No tenants found</td></tr>';
+    document.getElementById('pagination').style.display = 'none';
+    return;
+  }
+
+  tbody.innerHTML = tenants.map(function(t){
+    var usersLimit = t.max_users || '—';
+    var usersCount = t.user_count || 0;
+    var usagePct = t.max_users ? Math.min(100, Math.round(usersCount/t.max_users*100)) : 0;
+    var fillClass = usagePct >= 100 ? 'fill-over' : usagePct >= 80 ? 'fill-warn' : 'fill-ok';
+    var trialNote = '';
+    if(t.status === 'trial' && t.trial_days_remaining !== null){
+      trialNote = '<div style="font-size:11px;color:var(--amber);margin-top:3px">'+t.trial_days_remaining+' days left</div>';
+    }
+    return '<tr>'+
+      '<td>'+
+        '<div style="font-weight:700;font-size:13.5px;color:var(--tx-2)">'+escHtml(t.company_name)+'</div>'+
+        '<div style="font-size:12px;color:var(--tx-3)">'+escHtml(t.admin_email||'—')+'</div>'+
+      '</td>'+
+      '<td>'+statusBadge(t.status)+trialNote+'</td>'+
+      '<td>'+
+        '<span style="font-size:12.5px;font-weight:600;padding:3px 10px;border-radius:10px;background:var(--primary-bg);color:var(--primary);border:1px solid var(--blue-border)">'+
+          escHtml(t.plan_name||'No plan')+
+        '</span>'+
+      '</td>'+
+      '<td style="min-width:140px">'+
+        (t.max_users ? 
+          '<div class="usage-row"><span class="usage-label">Users</span><div class="usage-track"><div class="usage-fill '+fillClass+'" style="width:'+usagePct+'%"></div></div><span class="usage-num">'+usersCount+'/'+usersLimit+'</span></div>'
+          : '<span style="font-size:12px;color:var(--tx-4)">No plan</span>')+
+      '</td>'+
+      '<td style="font-size:13px;color:var(--tx-2);font-weight:600">'+usersCount+'</td>'+
+      '<td style="font-size:13px;color:var(--tx-3)">'+formatDate(t.created_at)+'</td>'+
+      '<td>'+
+        '<div style="display:flex;gap:6px;flex-wrap:wrap">'+
+          '<button class="btn btn-primary btn-sm" onclick="openDetail(\''+t.id+'\')">Manage</button>'+
+          (t.status!=='active' ? '<button class="btn btn-success btn-sm" onclick="quickActivate(\''+t.id+'\',\''+escHtml(t.company_name)+'\')">✓ Activate</button>' : '')+
+          (t.status==='active' ? '<button class="btn btn-warning btn-sm" onclick="quickSuspend(\''+t.id+'\',\''+escHtml(t.company_name)+'\')">⊘ Suspend</button>' : '')+
+        '</div>'+
+      '</td>'+
+    '</tr>';
+  }).join('');
+
+  renderPagination(data);
+}
+
+// ── Pagination ────────────────────────────────────────────────
+function renderPagination(data){
+  var total = Math.ceil(data.total / pageSize);
+  var pg = document.getElementById('pagination');
+  if(total <= 1){ pg.style.display='none'; return; }
+  pg.style.display='flex';
+  document.getElementById('page-info').textContent = 'Page '+page+' of '+total;
+  var btns = '';
+  btns += '<button class="page-btn" '+(page===1?'disabled':'')+' onclick="goPage('+(page-1)+')">‹</button>';
+  for(var i=1;i<=total;i++){
+    if(i===1||i===total||Math.abs(i-page)<=1)
+      btns += '<button class="page-btn'+(i===page?' active':'')+'" onclick="goPage('+i+')">'+i+'</button>';
+    else if(Math.abs(i-page)===2)
+      btns += '<span class="page-ellipsis">…</span>';
+  }
+  btns += '<button class="page-btn" '+(page===total?'disabled':'')+' onclick="goPage('+(page+1)+')">›</button>';
+  document.getElementById('page-btns').innerHTML = btns;
+}
+function goPage(p){ page=p; loadTenants(); }
+
+// ── Quick actions from table ──────────────────────────────────
+async function quickActivate(id, name){
+  if(!confirm('Activate "'+name+'" and re-enable all their users?')) return;
+  try{
+    var r = await api('/admin/tenants/'+id+'/activate', {method:'POST'});
+    showToast(r.message, 'success');
+    loadTenants();
+  }catch(e){ showToast(e.message,'error'); }
+}
+async function quickSuspend(id, name){
+  if(!confirm('Suspend "'+name+'"? Non-admin users will be disabled.')) return;
+  try{
+    var r = await api('/admin/tenants/'+id+'/suspend', {method:'POST'});
+    showToast(r.message, 'warning');
+    loadTenants();
+  }catch(e){ showToast(e.message,'error'); }
+}
+
+// ── Open Tenant Detail Modal ──────────────────────────────────
+async function openDetail(tenantId){
+  activeTenantId = tenantId;
+  document.getElementById('detail-modal').classList.add('open');
+  document.getElementById('dm-warn').style.display = 'none';
+  document.getElementById('dm-users').innerHTML = '<div style="color:var(--tx-4);font-size:13px">Loading…</div>';
+
+  try{
+    var d = await api('/admin/tenants/'+tenantId+'/detail');
+    activeTenantData = d;
+    renderDetailModal(d);
+
+    // Also load plan limits
+    var limits = await api('/admin/tenants/'+tenantId+'/plan-limits');
+    renderUsage(limits);
+
+    if(limits.over_limit && (limits.over_limit.users || limits.over_limit.claims)){
+      var warns = [];
+      if(limits.over_limit.users) warns.push('User count exceeds plan limit ('+limits.usage.active_users+' / '+limits.limits.max_users+')');
+      if(limits.over_limit.claims) warns.push('Claims this month exceed limit ('+limits.usage.claims_this_month+' / '+limits.limits.max_claims+')');
+      document.getElementById('dm-warn-text').textContent = '⚠ Over limit: ' + warns.join(' · ');
+      document.getElementById('dm-warn').style.display = 'flex';
+    }
+  }catch(e){
+    showToast(e.message,'error');
+    closeModal('detail-modal');
+  }
+}
+
+function renderDetailModal(d){
+  document.getElementById('dm-company').textContent = d.company_name;
+  document.getElementById('dm-status-badge').innerHTML = statusBadge(d.status);
+  document.getElementById('dm-plan-badge').textContent = d.plan_name || 'No plan';
+  document.getElementById('dm-admin-email').textContent = d.admin_email || '';
+  document.getElementById('pm-company').textContent = d.company_name;
+
+  // Show/hide action buttons based on status
+  document.getElementById('btn-activate').style.display = d.status !== 'active' ? 'flex' : 'none';
+  document.getElementById('btn-suspend').style.display = d.status === 'active' ? 'flex' : 'none';
+
+  // Users list
+  var users = d.users || [];
+  document.getElementById('dm-user-count-badge').textContent = users.length + ' user' + (users.length!==1?'s':'');
+  document.getElementById('dm-users').innerHTML = users.map(function(u){
+    var col = avatarColor(u.email);
+    var initials = (u.full_name||'?').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+    var isActive = u.status === 'active';
+    return '<div class="user-row">'+
+      '<div class="u-init" style="background:'+col+'">'+initials+'</div>'+
+      '<div class="u-info">'+
+        '<div class="u-name">'+escHtml(u.full_name)+'</div>'+
+        '<div class="u-email">'+escHtml(u.email)+'</div>'+
+      '</div>'+
+      '<span class="u-role" style="background:'+(isActive?'var(--green-l)':'var(--red-l)')+';color:'+(isActive?'var(--green)':'var(--red)')+'">'+
+        (isActive?'Active':'Disabled')+
+      '</span>'+
+      roleBadgeSmall(u.role)+
+      (u.role !== 'tenant_admin' ?
+        '<button class="btn-toggle-status '+(isActive?'btn-disable':'btn-enable')+'" onclick="toggleUserStatus(\''+u.id+'\',\''+u.full_name.replace(/'/g,'')+'\',\''+isActive+'\')">'+
+          (isActive?'Disable':'Enable')+
+        '</button>'
+        : '<span style="font-size:11px;color:var(--tx-4);padding:5px 8px">Admin</span>'+
+          '<span style="width:64px"></span>'
+      )+
+    '</div>';
+  }).join('') || '<div style="color:var(--tx-4);font-size:13px;padding:8px 0">No users found</div>';
+}
+
+function renderUsage(limits){
+  var plan = limits.plan;
+  var usage = limits.usage;
+  var lims = limits.limits;
+  document.getElementById('dm-billing').textContent = limits.billing_cycle ? (limits.billing_cycle.charAt(0).toUpperCase()+limits.billing_cycle.slice(1)) : '—';
+
+  if(!plan){ document.getElementById('dm-usage').innerHTML = '<div style="color:var(--tx-4);font-size:13px">No plan assigned — <button class="btn btn-ghost btn-sm" onclick="openPlanModal()">Assign Plan</button></div>'; return; }
+
+  var rows = [];
+  // Users
+  var uPct = lims.max_users ? Math.min(100, Math.round(usage.active_users/lims.max_users*100)) : 0;
+  var uFill = uPct >= 100 ? 'fill-over' : uPct >= 80 ? 'fill-warn' : 'fill-ok';
+  rows.push(makeUsageRow('Users', usage.active_users, lims.max_users, uPct, uFill));
+  // Claims
+  var cPct = lims.max_claims ? Math.min(100, Math.round(usage.claims_this_month/lims.max_claims*100)) : 0;
+  var cFill = cPct >= 100 ? 'fill-over' : cPct >= 80 ? 'fill-warn' : 'fill-ok';
+  rows.push(makeUsageRow('Claims', usage.claims_this_month, lims.max_claims, cPct, cFill));
+  document.getElementById('dm-usage').innerHTML = rows.join('');
+}
+
+function makeUsageRow(label, used, max, pct, fillClass){
+  var maxStr = max ? max : '∞';
+  var numStr = used + '/' + maxStr;
+  return '<div class="usage-row">'+
+    '<span class="usage-label">'+label+'</span>'+
+    '<div class="usage-track"><div class="usage-fill '+fillClass+'" style="width:'+(max?pct:0)+'%"></div></div>'+
+    '<span class="usage-num">'+numStr+'</span>'+
+  '</div>';
+}
+
+// ── Toggle individual user status ─────────────────────────────
+async function toggleUserStatus(userId, userName, currentlyActive){
+  var action = currentlyActive === 'true' ? 'disable' : 'enable';
+  if(!confirm((action==='disable'?'Disable':'Enable')+' user "'+userName+'"?')) return;
+  try{
+    var r = await api('/admin/tenants/'+activeTenantId+'/users/'+userId+'/status', {method:'PATCH'});
+    showToast(r.message,'success');
+    openDetail(activeTenantId); // refresh
+  }catch(e){ showToast(e.message,'error'); }
+}
+
+// ── Activate / Suspend tenant ─────────────────────────────────
+async function activateTenant(){
+  if(!confirm('Activate this tenant and re-enable all their users?')) return;
+  try{
+    var r = await api('/admin/tenants/'+activeTenantId+'/activate', {method:'POST'});
+    showToast(r.message,'success');
+    closeModal('detail-modal');
+    loadTenants();
+  }catch(e){ showToast(e.message,'error'); }
+}
+async function suspendTenant(){
+  if(!confirm('Suspend this tenant? Non-admin users will be disabled.')) return;
+  try{
+    var r = await api('/admin/tenants/'+activeTenantId+'/suspend', {method:'POST'});
+    showToast(r.message,'warning');
+    closeModal('detail-modal');
+    loadTenants();
+  }catch(e){ showToast(e.message,'error'); }
+}
+
+// ── Extend trial ──────────────────────────────────────────────
+function openExtendTrial(){
+  document.getElementById('extend-trial-form').style.display='block';
+}
+async function extendTrial(){
+  var days = parseInt(document.getElementById('trial-days').value);
+  if(!days||days<1){ showToast('Enter valid number of days','error'); return; }
+  try{
+    var r = await api('/admin/tenants/'+activeTenantId+'/extend-trial',
+      {method:'POST', body:JSON.stringify({days:days})});
+    showToast(r.message,'success');
+    document.getElementById('extend-trial-form').style.display='none';
+    openDetail(activeTenantId);
+  }catch(e){ showToast(e.message,'error'); }
+}
+
+// ── Plan assignment modal ─────────────────────────────────────
+function openPlanModal(){
+  if(!activeTenantId) return;
+  selectedPlanId = activeTenantData && activeTenantData.subscription ? activeTenantData.subscription.plan_id : null;
+  document.getElementById('pm-warn').style.display='none';
+  document.getElementById('plan-modal').classList.add('open');
+  renderPlanList();
+}
+
+function setCycle(c, btn){
+  billingCycle = c;
+  document.querySelectorAll('#plan-modal .role-pill').forEach(function(p){p.classList.remove('active');});
+  btn.classList.add('active');
+  renderPlanList();
+}
+
+function renderPlanList(){
+  var html = allPlans.filter(function(p){return p.is_active;}).map(function(p){
+    var isSelected = p.id === selectedPlanId;
+    var price = billingCycle === 'annual' && p.annual_monthly_equiv ? p.annual_monthly_equiv : p.monthly_price;
+    var priceStr = price ? '₹'+price.toLocaleString('en-IN') : 'Custom';
+    var perStr = price ? '/mo' + (billingCycle==='annual'?' (billed annually)':'') : '';
+    return '<div class="plan-card'+(isSelected?' selected':'')+(p.is_featured?' featured':'')+'" onclick="selectPlan(\''+p.id+'\',this)">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start">'+
+      '<div class="plan-name">'+escHtml(p.name)+'</div>'+
+      (isSelected?'<span style="color:var(--primary);font-size:16px">✓</span>':'')+
+      '</div>'+
+      '<div class="plan-price">'+priceStr+'<span style="font-size:13px;font-weight:500;color:var(--tx-3)">'+perStr+'</span></div>'+
+      '<div class="plan-limit">'+
+        (p.max_users?'👥 '+p.max_users+' users':'👥 Unlimited users')+' &nbsp;·&nbsp; '+
+        (p.max_claims_per_month?'📄 '+p.max_claims_per_month+' claims/mo':'📄 Unlimited claims')+
+      '</div>'+
+      (p.description ? '<div style="font-size:12px;color:var(--tx-3);margin-top:6px">'+escHtml(p.description)+'</div>' : '')+
+    '</div>';
+  }).join('');
+  document.getElementById('plan-list').innerHTML = html || '<div style="color:var(--tx-4);font-size:13px">No active plans</div>';
+}
+
+function selectPlan(planId, card){
+  selectedPlanId = planId;
+  document.querySelectorAll('.plan-card').forEach(function(c){c.classList.remove('selected');});
+  card.classList.add('selected');
+  // Re-render to show/remove checkmark
+  renderPlanList();
+
+  // Check if downgrade warning needed
+  if(activeTenantData){
+    var plan = allPlans.find(function(p){return p.id===planId;});
+    var activeUsers = activeTenantData.users ? activeTenantData.users.filter(function(u){return u.status==='active';}).length : 0;
+    if(plan && plan.max_users && activeUsers > plan.max_users){
+      document.getElementById('pm-warn-text').textContent =
+        'This plan allows '+plan.max_users+' users but this tenant has '+activeUsers+' active users. '+
+        (activeUsers - plan.max_users)+' user(s) will be automatically disabled.';
+      document.getElementById('pm-warn').style.display='flex';
+    } else {
+      document.getElementById('pm-warn').style.display='none';
+    }
+  }
+}
+
+async function assignPlan(){
+  if(!selectedPlanId){ showToast('Please select a plan','error'); return; }
+  try{
+    var r = await api('/admin/tenants/'+activeTenantId+'/plan',
+      {method:'POST', body:JSON.stringify({plan_id:selectedPlanId, billing_cycle:billingCycle})});
+    showToast(r.message,'success');
+    closeModal('plan-modal');
+    openDetail(activeTenantId); // refresh detail
+    loadTenants(); // refresh table
+  }catch(e){ showToast(e.message,'error'); }
+}
+
+// ── Helpers ───────────────────────────────────────────────────
+function closeModal(id){
+  document.getElementById(id).classList.remove('open');
+  if(id==='detail-modal'){
+    activeTenantId=null; activeTenantData=null;
+    document.getElementById('extend-trial-form').style.display='none';
+  }
+}
+// Close on backdrop click
+document.querySelectorAll('.modal-overlay').forEach(function(mo){
+  mo.addEventListener('click', function(e){ if(e.target===mo) closeModal(mo.id); });
+});
+
+function roleBadgeSmall(role){
+  var map = {
+    tenant_admin:'#4338ca',cn_team:'#0891b2',finance_team:'#059669',
+    cfa_team:'#7c3aed',finance_cfa_team:'#7c3aed',dealer:'#db2777'
+  };
+  var labels = {
+    tenant_admin:'Admin',cn_team:'CN',finance_team:'Finance',
+    cfa_team:'CFA',finance_cfa_team:'Fin+CFA',dealer:'Dealer'
+  };
+  var c = map[role]||'#64748b';
+  return '<span style="font-size:11px;font-weight:700;color:'+c+';padding:2px 7px;border-radius:8px;background:'+c+'18;flex-shrink:0">'+
+    (labels[role]||role)+'</span>';
+}
+function avatarColor(email){
+  var colors=['#4f46e5','#7c3aed','#0891b2','#059669','#d97706','#dc2626','#db2777'];
+  var h=0; for(var i=0;i<(email||'').length;i++) h=(h*31+email.charCodeAt(i))%colors.length;
+  return colors[Math.abs(h)];
+}
+function escHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>

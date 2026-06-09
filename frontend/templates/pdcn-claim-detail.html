@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Claim Detail – PDCN CRM</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/static/css/dashboard.css"/>
+<script src="/static/js/app.js"></script>
+<script>
+async function downloadClaimExcel(){
+  var cid = new URLSearchParams(window.location.search).get('id');
+  if(!cid){ showToast('No claim selected','error'); return; }
+  var btn = document.getElementById('dl-excel-btn');
+  setLoading(btn, true);
+  try{
+    var token = (typeof Auth !== 'undefined') ? Auth.getAccess() : getToken();
+    var res = await fetch('/api/v1/reports/claims/'+cid+'/excel', {
+      headers:{'Authorization':'Bearer '+token}
+    });
+    if(!res.ok){
+      var e = await res.json().catch(function(){return{detail:'Download failed'};});
+      throw new Error(e.detail||'Download failed');
+    }
+    var blob = await res.blob();
+    var disp = res.headers.get('Content-Disposition')||'';
+    var fname = disp.match(/filename="([^"]+)"/);
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = fname ? fname[1] : 'claim.xlsx';
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+    showToast('Excel downloaded!','success');
+  }catch(e){
+    showToast('Download failed: '+e.message,'error');
+  }
+  setLoading(btn, false);
+}
+</script>
+<script>
+async function downloadFile(path, filename){
+  try{
+    var url = path.startsWith('/api') ? path : '/api/v1/pdcn/attachments/'+path;
+    var token = (typeof Auth !== 'undefined') ? Auth.getAccess() : getToken();
+    var res = await fetch(url, {headers:{'Authorization':'Bearer '+token}});
+    if(!res.ok){
+      var errData = await res.json().catch(function(){return{detail:'File not found'};});
+      throw new Error(errData.detail||'Download failed ('+res.status+')');
+    }
+    var blob = await res.blob();
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename || path.split('/').pop();
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 500);
+    showToast('Downloading...','success');
+  }catch(e){
+    showToast('Download failed: '+e.message,'error');
+  }
+}
+</script>
+<style>
+.detail-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:20px}
+.detail-field{background:var(--blue-pale);border-radius:8px;padding:12px 14px}
+.detail-label{font-size:11px;font-weight:600;color:var(--ink2);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.detail-val{font-size:14px;font-weight:500;color:var(--text)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;margin-bottom:20px}
+.card-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:700;margin-bottom:16px;color:var(--primary)}
+table.detail-table{width:100%;border-collapse:collapse;min-width:1600px}
+table.detail-table th{padding:9px 12px;font-size:11px;font-weight:600;color:var(--ink2);text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap;text-align:left}
+table.detail-table td{padding:10px 12px;font-size:13px;border-bottom:1px solid var(--border);white-space:nowrap}
+.timeline{position:relative;padding-left:24px}
+.timeline::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:2px;background:var(--border)}
+.tl-item{position:relative;margin-bottom:20px}
+.tl-dot{position:absolute;left:-20px;top:4px;width:12px;height:12px;border-radius:50%;border:2px solid #6366f1;background:var(--cobalt-pale)}
+.tl-dot.approved{border-color:#10b981;background:rgba(16,185,129,.2)}
+.tl-dot.rejected{border-color:#ef4444;background:rgba(239,68,68,.2)}
+.tl-dot.sent_back{border-color:#f97316;background:rgba(249,115,22,.2)}
+.tl-dot.completed{border-color:#8b5cf6;background:rgba(139,92,246,.2)}
+.tl-action{font-size:13px;font-weight:600}
+.tl-meta{font-size:12px;color:var(--ink2);margin-top:2px}
+.tl-remarks{font-size:12px;color:var(--primary);margin-top:4px;padding:6px 10px;background:rgba(99,102,241,.05);border-radius:6px;border-left:2px solid #6366f180}
+.status-pill{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600}
+.btn{padding:9px 20px;border-radius:8px;font-size:13px;font-weight:600;border:none;cursor:pointer;transition:all .2s}
+.btn-approve{background:#10b981;color:#fff}.btn-reject{background:#ef4444;color:#fff}
+.btn-warning{background:#f59e0b;color:#fff}.btn-primary{background:#6366f1;color:#fff}
+.btn-ghost{background:var(--primary-bg);color:var(--ink2);border:1px solid var(--border)}
+.action-bar{display:flex;gap:10px;flex-wrap:wrap;padding:16px 22px;background:var(--blue-pale);border-radius:10px;margin-bottom:20px;align-items:center}
+.action-label{font-size:13px;color:var(--ink2);font-weight:500;margin-right:4px}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="icon">T</div>
+    <div>
+      <div class="name">PDCN <span>CRM</span></div>
+      <div class="badge">Workflow</div>
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">PDCN Workflow</div>
+    <a class="nav-item" href="/templates/pdcn-dashboard.html" id="snav-dashboard"><span class="nav-icon">📊</span>Dashboard</a>
+    <a class="nav-item active"><span class="nav-icon">📄</span>Claim Detail</a>
+    <a class="nav-item" href="/templates/pdcn-new-claim.html" id="snav-new" style="display:none"><span class="nav-icon">➕</span>New Claim</a>
+    <a class="nav-item" href="/templates/pdcn-sales-register.html" id="snav-sales" style="display:none"><span class="nav-icon">📊</span>Sales Register</a>
+      <a class="nav-item" href="/templates/chat.html"><span class="nav-icon">💬</span>Chat <span id="chat-unread-badge" style="display:none;background:#ef4444;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:4px">0</span></a>
+    <a class="nav-item" href="/templates/pdcn-sales-template.html" id="snav-template"><span class="nav-icon">📥</span>Templates &amp; Reports</a>
+    <a class="nav-item" href="/templates/help-videos.html"><span class="nav-icon">🎓</span>Help &amp; Training</a>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar" id="t-avatar">U</div>
+      <div class="user-info"><div class="user-name" id="t-name">User</div><div class="user-role" id="t-role">—</div></div>
+      <button class="logout-btn" id="logout-btn">⏻</button>
+    </div>
+  </div>
+</aside>
+
+<div class="main-content">
+  <div class="topbar">
+    <span class="topbar-title" id="topbar-title">Claim Detail</span>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn btn-ghost btn-sm" onclick="history.back()">← Back</button>
+      <button class="btn btn-success btn-sm" id="dl-excel-btn" onclick="downloadClaimExcel()">📥 Download Excel</button>
+    </div>
+  </div>
+  <div class="page-content">
+    <div id="loading" style="text-align:center;padding:60px;color:var(--muted)">Loading claim…</div>
+    <div id="content" style="display:none">
+      <!-- Action Bar -->
+      <div id="action-bar" class="action-bar" style="display:none!important"></div>
+
+      <!-- Header -->
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+          <div>
+            <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;font-weight:800" id="claim-no">—</div>
+            <div style="font-size:13px;color:var(--ink2);margin-top:4px" id="claim-date">—</div>
+          </div>
+          <div id="claim-status-badge"></div>
+        </div>
+        <div class="detail-grid" id="header-fields"></div>
+      </div>
+
+      <!-- Line Items -->
+      <div class="card">
+        <div class="card-title">📦 Line Items</div>
+        <div style="overflow-x:auto;max-width:100%">
+          <table class="detail-table">
+            <thead><tr>
+              <th>#</th><th>Material Code</th><th>Brand Code</th><th>Invoice No</th><th>Manual?</th>
+              <th>Invoice Date</th><th style="min-width:180px">Product Name</th><th>Product Code</th>
+              <th>Qty</th><th>Purchase Price (A)</th><th>Allowed SD Price (B)</th><th>Selling Price</th>
+              <th>Diff Price (A-B)*C</th><th>Billed To</th><th>Billed Date</th><th>Dealer Inv No</th>
+              <th>CN Type</th>
+            </tr></thead>
+            <tbody id="items-tbody"></tbody>
+          </table>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:24px;margin-top:14px;padding:12px;background:rgba(99,102,241,.05);border-radius:8px">
+          <div style="text-align:right"><div style="font-size:11px;color:var(--muted)">Total Qty</div><div style="font-size:20px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;color:var(--primary)" id="ttl-qty">0</div></div>
+          <div style="text-align:right"><div style="font-size:11px;color:var(--muted)">Total Claim Amount (Σ Diff)</div><div style="font-size:20px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;color:var(--primary)" id="ttl-amt">₹0</div></div>
+        </div>
+      </div>
+
+      <!-- Attachments -->
+      <div class="card" id="attachments-card">
+        <div class="card-title">📎 Documents</div>
+        <div id="attachments-list"></div>
+      </div>
+
+      <!-- Credit Note (if generated) -->
+      <div class="card" id="cn-card" style="display:none">
+        <div class="card-title">✅ Credit Note</div>
+        <div id="cn-detail"></div>
+      </div>
+
+      <!-- Videos -->
+      <div class="card" id="videos-card">
+        <div class="card-title">🎬 Video Evidence</div>
+        <div id="videos-list"><div style="color:var(--ink2);font-size:13px">No videos uploaded</div></div>
+      </div>
+
+      <!-- Approval Timeline -->
+      <div class="card">
+        <div class="card-title">🕐 Approval Timeline</div>
+        <div class="timeline" id="timeline"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Action Modal -->
+<div id="action-modal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.4);backdrop-filter:blur(6px);z-index:1000;align-items:center;justify-content:center">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:440px;width:90%">
+    <h3 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;margin-bottom:16px" id="modal-title">Action</h3>
+    <div style="margin-bottom:14px">
+      <label style="display:block;font-size:12px;font-weight:600;color:var(--cobalt);margin-bottom:6px">Remarks <span id="modal-req" style="color:#ef4444"></span></label>
+      <textarea id="modal-remarks" style="width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--primary-bg);color:var(--ink);font-size:14px;font-family:'Nunito',sans-serif;min-height:80px;resize:vertical;box-sizing:border-box"></textarea>
+    </div>
+    <div id="modal-error" style="color:#ef4444;font-size:13px;display:none;margin-bottom:8px"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeAction()">Cancel</button>
+      <button class="btn btn-primary" id="modal-submit" onclick="doAction()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var claimData=null,currentAction=null,userRole=null,claimId=null;
+
+document.addEventListener('DOMContentLoaded',function(){
+  var u=getUser();
+  if(!u||!getToken()){window.location.href='/templates/login.html';return;}
+  userRole=u.role;
+  document.getElementById('t-name').textContent=u.full_name||'';
+  document.getElementById('t-avatar').textContent=(u.full_name||'U').slice(0,2).toUpperCase();
+  document.getElementById('t-role').textContent=(u.role||'').replace(/_/g,' ');
+
+  // Role-based nav — show only what this role needs, redirect admin
+  if(u.role === 'tenant_admin'){ window.location.href = '/templates/tenant-dashboard.html'; return; }
+  if(['dealer'].includes(u.role)){
+    var sn=document.getElementById('snav-new');if(sn)sn.style.display='';
+  }
+  if(['finance_team','finance_cfa_team'].includes(u.role)){
+    var ss=document.getElementById('snav-sales');if(ss)ss.style.display='';
+  }
+  document.getElementById('logout-btn').onclick=doLogout;
+
+  var params=new URLSearchParams(window.location.search);
+  claimId=params.get('id');
+  if(!claimId){document.getElementById('loading').textContent='No claim ID specified';return;}
+  loadClaim();
+});
+
+function getToken(){return localStorage.getItem('access_token');}
+function getUser(){try{return JSON.parse(localStorage.getItem('user')||'null');}catch{return null;}}
+function doLogout(){localStorage.clear();window.location.href='/templates/login.html';}
+async function callAPI(path,opts){
+  opts=opts||{};
+  var headers=opts.headers||{};
+  var tok=getToken();if(tok)headers['Authorization']='Bearer '+tok;
+  if(!(opts.body instanceof FormData))headers['Content-Type']='application/json';
+  var res=await fetch('/api/v1'+path,Object.assign({},opts,{headers:headers}));
+  if(!res.ok){var e=await res.json().catch(function(){return{detail:res.statusText};});throw new Error(e.detail||'Error');}
+  return res.json();
+}
+
+async function loadClaim(){
+  try{
+    claimData=await callAPI('/pdcn/claims/'+claimId);
+    renderClaim();
+    document.getElementById('loading').style.display='none';
+    document.getElementById('content').style.display='block';
+  }catch(e){document.getElementById('loading').textContent='Error: '+e.message;}
+}
+
+function statusPill(s){
+  var labels={draft:'Draft',submitted:'Submitted',cn_approved:'CN Approved',cn_rejected:'CN Rejected',
+    finance_approved:'Finance Approved',finance_rejected:'Finance Rejected',sent_back:'Sent Back',
+    cn_generated:'CN Generated',completed:'Completed',cancelled:'Cancelled'};
+  var colors={draft:'#6b7280',submitted:'#6366f1',cn_approved:'#06b6d4',cn_rejected:'#ef4444',
+    finance_approved:'#10b981',finance_rejected:'#f59e0b',sent_back:'#f97316',cn_generated:'#0ea5e9',completed:'#8b5cf6',cancelled:'#6b7280'};
+  var c=colors[s]||'#6b7280';
+  return '<span style="background:'+c+'22;color:'+c+';padding:5px 14px;border-radius:20px;font-size:13px;font-weight:700;border:1px solid '+c+'44">'+(labels[s]||s)+'</span>';
+}
+
+function renderClaim(){
+  var c=claimData;
+  document.getElementById('topbar-title').textContent='Claim: '+c.claim_no;
+  document.getElementById('claim-no').textContent=c.claim_no;
+  document.getElementById('claim-date').textContent='Requested: '+(c.request_date?new Date(c.request_date).toLocaleDateString('en-IN'):'—');
+  document.getElementById('claim-status-badge').innerHTML=statusPill(c.status);
+
+  document.getElementById('header-fields').innerHTML=[
+    {l:'Dealer',v:c.dealer_name},{l:'Dealer Code',v:c.dealer_code||'—'},
+    {l:'Region',v:c.region||'—'},{l:'State',v:c.state||'—'},
+    {l:'Sales Person',v:c.sales_person||'—'},{l:'Claim Type',v:(c.claim_type||'pdcn').toUpperCase()},
+    {l:'CN Remarks',v:c.cn_remarks||'—'},{l:'Finance Remarks',v:c.finance_remarks||'—'},
+  ].map(function(f){return '<div class="detail-field"><div class="detail-label">'+f.l+'</div><div class="detail-val">'+f.v+'</div></div>';}).join('');
+
+  // Line items
+  var tbody=document.getElementById('items-tbody');
+  tbody.innerHTML=(c.line_items||[]).map(function(item,i){
+    var invDate   = item.invoice_date ? new Date(item.invoice_date).toLocaleDateString('en-IN') : '—';
+    var billDate  = item.billed_date  ? new Date(item.billed_date).toLocaleDateString('en-IN')  : '—';
+    var fmtAmt = function(v){ return v && v!='0' ? '₹'+v : '—'; };
+    return '<tr>'+
+      '<td style="color:var(--tx-3);text-align:center">'+(i+1)+'</td>'+
+      '<td><span style="font-family:JetBrains Mono,monospace;font-size:12px">'+(item.sap_material_code||'—')+'</span></td>'+
+      '<td style="text-align:center">'+(item.brand_code||'—')+'</td>'+
+      '<td><span style="font-family:JetBrains Mono,monospace;font-size:12px">'+(item.invoice_no||'—')+'</span></td>'+
+      '<td style="text-align:center">'+(item.is_manual_invoice?'<span style="color:var(--amber);font-weight:700">Yes</span>':'No')+'</td>'+
+      '<td style="white-space:nowrap">'+invDate+'</td>'+
+      '<td style="font-weight:600">'+item.product_name+'</td>'+
+      '<td style="font-size:12px">'+(item.product_code||'—')+'</td>'+
+      '<td style="text-align:center;font-weight:700">'+item.quantity+'</td>'+
+      '<td style="text-align:right">'+fmtAmt(item.purchase_price)+'</td>'+
+      '<td style="text-align:right">'+fmtAmt(item.invoice_rate)+'</td>'+
+      '<td style="text-align:right">'+fmtAmt(item.claim_rate)+'</td>'+
+      '<td style="text-align:right;font-weight:800;color:var(--green)">'+
+        (function(){
+          var p=parseFloat(item.purchase_price||0), s=parseFloat(item.invoice_rate||0), q=parseInt(item.quantity||1);
+          var d=(p-s)*q;
+          return d>0 ? '₹'+d.toLocaleString('en-IN',{minimumFractionDigits:2}) : (item.difference_amt||'—');
+        })()+
+      '</td>'+
+      '<td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(item.billed_to||'—')+'</td>'+
+      '<td style="white-space:nowrap">'+billDate+'</td>'+
+      '<td style="font-size:12px">'+(item.dealer_invoice_no||'—')+'</td>'+
+      '<td><span style="background:var(--primary-bg);color:var(--primary);padding:2px 8px;border-radius:5px;font-size:12px;font-weight:700">'+(item.credit_note_type||'CR1')+'</span></td>'+
+    '</tr>';
+  }).join('') || '<tr><td colspan="17" style="text-align:center;padding:20px;color:var(--tx-3)">No line items</td></tr>';
+
+  document.getElementById('ttl-qty').textContent=c.total_qty||0;
+  // Recalculate total from diff prices: sum of (purchase_price - invoice_rate) * qty
+  var calcTotal = 0;
+  (c.line_items||[]).forEach(function(item){
+    var purch = parseFloat(item.purchase_price||0);
+    var sd    = parseFloat(item.invoice_rate||0);
+    var qty   = parseInt(item.quantity||1);
+    calcTotal += (purch - sd) * qty;
+  });
+  var displayAmt = calcTotal > 0 ? calcTotal : parseFloat(c.total_amount||0);
+  document.getElementById('ttl-amt').textContent = '₹'+displayAmt.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+  // Attachments
+  var attList=document.getElementById('attachments-list');
+  if(c.attachments&&c.attachments.length){
+    attList.innerHTML=c.attachments.map(function(a){
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--blue-pale);border-radius:8px;margin-bottom:8px">'+
+        '<span>📎 '+a.original_name+'</span>'+
+        '<button onclick="downloadFile(\'/api/v1/pdcn/attachments/\'+this.dataset.fn,this.dataset.on)" data-fn="'+a.filename+'" data-on="'+a.original_name+'" style="background:var(--primary-bg);border:1.5px solid var(--blue-border);color:var(--primary);border-radius:6px;padding:4px 12px;cursor:pointer;font-size:12.5px;font-weight:700">⬇ Download</button>'+
+      '</div>';
+    }).join('');
+  }else{
+    attList.innerHTML='<div style="color:var(--ink2);font-size:13px">No documents uploaded</div>';
+  }
+
+  // Credit note
+  if(c.credit_note){
+    document.getElementById('cn-card').style.display='block';
+    var cn=c.credit_note;
+    document.getElementById('cn-detail').innerHTML=
+      '<div class="detail-grid">'+
+      '<div class="detail-field"><div class="detail-label">CN Number</div><div class="detail-val" style="font-weight:700;color:#10b981">'+cn.cn_number+'</div></div>'+
+      '<div class="detail-field"><div class="detail-label">CN Date</div><div class="detail-val">'+new Date(cn.cn_date).toLocaleDateString('en-IN')+'</div></div>'+
+      '<div class="detail-field"><div class="detail-label">CN Amount</div><div class="detail-val" style="font-weight:700;color:var(--primary)">₹'+cn.cn_amount+'</div></div>'+
+      '</div>'+
+      (cn.cn_filename?'<button onclick="downloadFile(this.dataset.fn,this.dataset.on)" data-fn="'+cn.cn_filename+'" data-on="'+(cn.cn_original_name||cn.cn_filename)+'" style="background:var(--primary-bg);border:1.5px solid var(--blue-border);color:var(--primary);border-radius:6px;padding:5px 14px;cursor:pointer;font-size:13px;font-weight:700">⬇ Download Credit Note PDF</button>':'');
+  }
+
+  // Videos
+  loadVideos();
+
+  // Timeline
+  var tl=document.getElementById('timeline');
+  var logs=c.approval_logs||[];
+  if(!logs.length){tl.innerHTML='<div style="color:var(--ink2);font-size:13px">No activity yet</div>';}
+  else{
+    tl.innerHTML=logs.map(function(l){
+      var dotCls='';
+      if(l.action.includes('APPROVED')||l.action==='COMPLETED')dotCls='approved';
+      else if(l.action.includes('REJECTED'))dotCls='rejected';
+      else if(l.action==='SENT_BACK')dotCls='sent_back';
+      return '<div class="tl-item">'+
+        '<div class="tl-dot '+dotCls+'"></div>'+
+        '<div class="tl-action">'+l.action.replace(/_/g,' ')+'</div>'+
+        '<div class="tl-meta">'+( l.actioned_by_name||'System')+' · '+(l.actioned_by_role||'').replace(/_/g,' ')+' · '+new Date(l.created_at).toLocaleString('en-IN')+'</div>'+
+        (l.remarks?'<div class="tl-remarks">'+l.remarks+'</div>':'')+
+      '</div>';
+    }).join('');
+  }
+
+  // Action bar
+  renderActionBar(c.status);
+}
+
+function renderActionBar(s){
+  var bar=document.getElementById('action-bar');
+  var role=userRole;
+  var html='<span class="action-label">Actions:</span>';
+  var hasAction=false;
+  if(s==='submitted'&&['cn_team','finance_cfa_team','super_admin','tenant_admin'].includes(role)){
+    html+='<button class="btn btn-approve" onclick="openAction(\'cn_approve\')">✓ CN Approve</button>';
+    html+='<button class="btn btn-reject" onclick="openAction(\'cn_reject\')">✕ CN Reject</button>';
+    html+='<button class="btn btn-warning" onclick="openAction(\'send_back\')">↩ Send Back</button>';
+    hasAction=true;
+  }
+  if(s==='cn_approved'&&['finance_team','finance_cfa_team','super_admin','tenant_admin'].includes(role)){
+    html+='<button class="btn btn-approve" onclick="openAction(\'fin_approve\')">✓ Finance Approve</button>';
+    html+='<button class="btn btn-reject" onclick="openAction(\'fin_reject\')">✕ Finance Reject</button>';
+    hasAction=true;
+  }
+  if(s==='finance_approved'&&['cfa_team','finance_cfa_team','super_admin','tenant_admin'].includes(role)){
+    html+='<button class="btn btn-primary" onclick="window.location.href=\'/templates/pdcn-credit-note.html?id='+claimId+'\'">📄 Generate Credit Note</button>';
+    hasAction=true;
+  }
+  if(s==='cn_generated'&&['cfa_team','finance_cfa_team','super_admin','tenant_admin'].includes(role)){
+    html+='<button class="btn btn-approve" onclick="completeClaim()">✓ Mark Completed</button>';
+    hasAction=true;
+  }
+  if((s==='draft'||s==='sent_back')&&['dealer','super_admin','tenant_admin'].includes(role)){
+    html+='<button class="btn btn-primary" onclick="window.location.href=\'/templates/pdcn-new-claim.html?id='+claimId+'\'">✏ Edit & Resubmit</button>';
+    hasAction=true;
+  }
+  if(hasAction){bar.style.cssText='';bar.innerHTML=html;}
+}
+
+function openAction(action){
+  currentAction=action;
+  var titles={cn_approve:'CN Team Approval',cn_reject:'CN Team Rejection',send_back:'Send Back for Correction',fin_approve:'Finance Approval',fin_reject:'Finance Rejection'};
+  document.getElementById('modal-title').textContent=titles[action]||action;
+  document.getElementById('modal-remarks').value='';
+  document.getElementById('modal-error').style.display='none';
+  var req=action.includes('reject')||action==='send_back';
+  document.getElementById('modal-req').textContent=req?' *':'';
+  document.getElementById('action-modal').style.display='flex';
+}
+function closeAction(){document.getElementById('action-modal').style.display='none';}
+
+async function doAction(){
+  var remarks=document.getElementById('modal-remarks').value.trim();
+  var errEl=document.getElementById('modal-error');errEl.style.display='none';
+  var isReq=currentAction.includes('reject')||currentAction==='send_back';
+  if(isReq&&!remarks){errEl.textContent='Remarks required.';errEl.style.display='block';return;}
+  var btn=document.getElementById('modal-submit');btn.disabled=true;btn.textContent='Processing…';
+  try{
+    var fd=new FormData();fd.append('remarks',remarks);
+    if(currentAction.startsWith('cn_')||currentAction==='send_back'){
+      var act=currentAction==='cn_approve'?'approve':currentAction==='cn_reject'?'reject':'send_back';
+      fd.append('action',act);
+      var res=await fetch('/api/v1/pdcn/claims/'+claimId+'/cn-action',{method:'POST',headers:{'Authorization':'Bearer '+getToken()},body:fd});
+      if(!res.ok){var e=await res.json();throw new Error(e.detail);}
+    }else{
+      var act2=currentAction==='fin_approve'?'approve':'reject';
+      fd.append('action',act2);
+      var res2=await fetch('/api/v1/pdcn/claims/'+claimId+'/finance-action',{method:'POST',headers:{'Authorization':'Bearer '+getToken()},body:fd});
+      if(!res2.ok){var e2=await res2.json();throw new Error(e2.detail);}
+    }
+    closeAction();loadClaim();
+  }catch(e){errEl.textContent=e.message;errEl.style.display='block';}
+  btn.disabled=false;btn.textContent='Confirm';
+}
+
+async function completeClaim(){
+  if(!confirm('Mark this claim as completed?'))return;
+  try{
+    await callAPI('/pdcn/claims/'+claimId+'/complete',{method:'POST'});
+    loadClaim();
+  }catch(e){alert(e.message);}
+}
+
+async function exportThisClaim(){
+  if(!claimId)return;
+  try{
+    var res=await fetch('/api/v1/reports/claims/excel?search='+claimId,{headers:{'Authorization':'Bearer '+getToken()}});
+    if(!res.ok)return;
+    var blob=await res.blob();
+    var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Claim_Detail.xlsx';a.click();
+  }catch(e){alert(e.message);}
+}
+
+async function loadVideos(){
+  try{
+    var res = await callAPI('/pdcn/claims/'+claimId+'/videos');
+    var list = document.getElementById('videos-list');
+    if(!res||!res.length){list.innerHTML='<div style="color:var(--ink2);font-size:13px">No videos uploaded</div>';return;}
+    list.innerHTML = res.map(function(v){
+      var size = v.file_size ? (v.file_size/1024/1024).toFixed(1)+'MB' : '';
+      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--blue-pale);border-radius:8px;margin-bottom:8px">'+
+        '<div>'+
+          '<div style="font-size:13px;font-weight:600;margin-bottom:2px">🎬 '+v.original_name+'</div>'+
+          '<div style="font-size:11px;color:var(--muted)">'+(v.description||'')+(size?' · '+size:'')+'</div>'+
+        '</div>'+
+        '<a href="/api/v1/pdcn/videos/'+v.filename+'" target="_blank" style="color:var(--primary);font-size:13px;text-decoration:none;padding:6px 14px;border:1px solid var(--blue-border);border-radius:6px">▶ Play</a>'+
+      '</div>';
+    }).join('');
+  }catch(e){console.warn('videos',e);}
+}
+</script>
+</body>
+</html>

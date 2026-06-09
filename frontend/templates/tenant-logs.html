@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Activity Logs — CRM</title>
+  
+  
+  <link rel="stylesheet" href="/static/css/dashboard.css">
+  <style>
+    .log-tabs { display:flex; gap:4px; margin-bottom:24px; border-bottom:1px solid var(--border); }
+    .log-tab { padding:10px 20px; font-size:14px; font-weight:500; color:var(--tx-3); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; transition:all .2s; }
+    .log-tab.active { color:var(--accent); border-color:var(--accent); }
+    .log-timeline { display:flex; flex-direction:column; gap:0; }
+    .log-entry { display:grid; grid-template-columns:44px 1fr auto; gap:16px; align-items:start; padding:16px 0; border-bottom:1px solid var(--border); }
+    .log-entry:last-child { border:none; }
+    .log-dot-wrap { display:flex; flex-direction:column; align-items:center; gap:0; }
+    .log-dot { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+    .log-dot.create  { background:rgba(16,185,129,.12); }
+    .log-dot.update  { background:rgba(99,102,241,.12); }
+    .log-dot.delete  { background:rgba(239,68,68,.12); }
+    .log-dot.login   { background:rgba(6,182,212,.12); }
+    .log-dot.logout  { background:rgba(245,158,11,.12); }
+    .log-dot.default { background:rgba(148,163,184,.1); }
+    .log-body { display:flex; flex-direction:column; gap:4px; }
+    .log-action { font-size:14px; font-weight:500; color:var(--ink); }
+    .log-meta  { font-size:12px; color:var(--tx-3); }
+    .log-entity { font-size:12px; color:var(--accent); }
+    .log-time  { font-size:12px; color:var(--tx-3); white-space:nowrap; padding-top:4px; }
+    .log-ip    { font-size:11px; color:var(--tx-3); background:var(--bg); padding:2px 8px; border-radius:4px; margin-top:4px; display:inline-block; }
+    .empty-logs { text-align:center; padding:60px 20px; color:var(--tx-3); }
+    .empty-logs .empty-icon { font-size:40px; margin-bottom:12px; }
+    .date-group-header { font-size:12px; font-weight:600; color:var(--tx-3); text-transform:uppercase; letter-spacing:.08em; padding:16px 0 8px; }
+  </style>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="/static/js/app.js"></script>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <span class="brand-icon">◈</span>
+      <span class="brand-name" id="brandName">CRM</span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Menu</div>
+      <a href="/templates/tenant-dashboard.html" class="nav-item"><span class="nav-icon">◈</span>Dashboard</a>
+      <a href="/templates/tenant-users.html" class="nav-item"><span class="nav-icon">◎</span>Users</a>
+      
+      <a href="/templates/tenant-profile.html" class="nav-item"><span class="nav-icon">◉</span>Profile</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="user-avatar-sm" id="sidebarAvatar">U</div>
+        <div class="user-meta">
+          <div class="user-meta-name" id="sidebarName">Loading...</div>
+          <div class="user-meta-role" id="sidebarRole">—</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main-wrapper">
+    <header class="topbar">
+      <button class="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      <div class="topbar-title">Activity Logs</div>
+      <div class="topbar-right">
+        <div class="search-box">
+          <span class="search-icon">⌕</span>
+          <input type="text" id="searchInput" placeholder="Search logs..." oninput="filterLogs()">
+        </div>
+        <div class="dropdown" id="profileDropdown">
+          <button class="topbar-avatar" id="topbarAvatar" onclick="toggleDropdown()">U</button>
+          <div class="dropdown-menu" id="dropMenu">
+            <div class="dropdown-header">
+              <div id="ddName">User</div>
+              <div class="dd-email" id="ddEmail"></div>
+            </div>
+            <hr class="dropdown-divider">
+            <a class="dropdown-item" href="/templates/tenant-profile.html">⚙ Profile</a>
+            <a class="dropdown-item" onclick="logout()">⎋ Logout</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="content">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Activity Logs</h1>
+          <p class="page-subtitle">Track all actions performed within your organization</p>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="exportLogs()">↓ Export</button>
+      </div>
+
+      <!-- Tabs -->
+      <div class="log-tabs">
+        <div class="log-tab active" onclick="switchTab(this,'activity')">Activity Log</div>
+        <div class="log-tab" onclick="switchTab(this,'login')">Login History</div>
+      </div>
+
+      <!-- Filters -->
+      <div class="card" style="padding:16px 20px; margin-bottom:20px;">
+        <div class="filter-row">
+          <div class="filter-group">
+            <select id="userFilter" class="filter-select" onchange="filterLogs()">
+              <option value="">All Users</option>
+            </select>
+            <select id="actionFilter" class="filter-select" onchange="filterLogs()">
+              <option value="">All Actions</option>
+              <option value="create">Create</option>
+              <option value="update">Update</option>
+              <option value="delete">Delete</option>
+              <option value="login">Login</option>
+              <option value="logout">Logout</option>
+              <option value="password">Password</option>
+            </select>
+            <input type="date" id="dateFrom" class="filter-select" onchange="filterLogs()" placeholder="From">
+            <input type="date" id="dateTo" class="filter-select" onchange="filterLogs()" placeholder="To">
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="clearFilters()">✕ Clear</button>
+        </div>
+      </div>
+
+      <!-- Log Content -->
+      <div class="card" style="padding:24px;" id="logContainer">
+        <div class="table-empty">Loading logs...</div>
+      </div>
+
+      <div class="pagination" id="pagination"></div>
+    </main>
+  </div>
+</div>
+
+<script>
+  requireAuth();
+
+  let currentTab = 'activity';
+  let allLogs = [];
+  let filteredLogs = [];
+  let currentPage = 1;
+  const PAGE_SIZE = 20;
+
+  async function loadLogs() {
+    const container = document.getElementById('logContainer');
+    container.innerHTML = '<div class="table-empty">Loading...</div>';
+    try {
+      if (currentTab === 'activity') {
+        const data = await api('/tenant/activity-logs?limit=500');
+        allLogs = data.logs || data || [];
+      } else {
+        const data = await api('/tenant/login-logs?limit=500');
+        allLogs = data.logs || data || [];
+      }
+      populateUserFilter();
+      filterLogs();
+    } catch (e) {
+      container.innerHTML = '<div class="table-empty">Failed to load logs</div>';
+    }
+  }
+
+  function populateUserFilter() {
+    const sel = document.getElementById('userFilter');
+    const seen = new Set();
+    const opts = ['<option value="">All Users</option>'];
+    allLogs.forEach(l => {
+      const key = l.user_id || l.performed_by;
+      const label = l.user_name || l.user_email || key;
+      if (key && !seen.has(key)) {
+        seen.add(key);
+        opts.push(`<option value="${key}">${label}</option>`);
+      }
+    });
+    sel.innerHTML = opts.join('');
+  }
+
+  function switchTab(el, tab) {
+    document.querySelectorAll('.log-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    currentTab = tab;
+    currentPage = 1;
+    loadLogs();
+  }
+
+  function filterLogs() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const userId = document.getElementById('userFilter').value;
+    const action = document.getElementById('actionFilter').value;
+    const from = document.getElementById('dateFrom').value;
+    const to = document.getElementById('dateTo').value;
+
+    filteredLogs = allLogs.filter(l => {
+      const txt = JSON.stringify(l).toLowerCase();
+      const matchSearch = !search || txt.includes(search);
+      const matchUser = !userId || l.user_id === userId || l.performed_by === userId;
+      const matchAction = !action || (l.action || '').toLowerCase().includes(action);
+      const logDate = new Date(l.created_at || l.timestamp);
+      const matchFrom = !from || logDate >= new Date(from);
+      const matchTo = !to || logDate <= new Date(to + 'T23:59:59');
+      return matchSearch && matchUser && matchAction && matchFrom && matchTo;
+    });
+
+    currentPage = 1;
+    renderLogs();
+  }
+
+  function clearFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('userFilter').value = '';
+    document.getElementById('actionFilter').value = '';
+    document.getElementById('dateFrom').value = '';
+    document.getElementById('dateTo').value = '';
+    filterLogs();
+  }
+
+  function getActionIcon(action) {
+    const a = (action || '').toLowerCase();
+    if (a.includes('create') || a.includes('add')) return { icon:'＋', cls:'create' };
+    if (a.includes('update') || a.includes('edit') || a.includes('change')) return { icon:'✎', cls:'update' };
+    if (a.includes('delete') || a.includes('remove')) return { icon:'✕', cls:'delete' };
+    if (a.includes('login') || a.includes('signin')) return { icon:'→', cls:'login' };
+    if (a.includes('logout') || a.includes('signout')) return { icon:'←', cls:'logout' };
+    return { icon:'◈', cls:'default' };
+  }
+
+  function groupByDate(logs) {
+    const groups = {};
+    logs.forEach(l => {
+      const d = new Date(l.created_at || l.timestamp);
+      const key = isNaN(d) ? 'Unknown' : d.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(l);
+    });
+    return groups;
+  }
+
+  function renderLogs() {
+    const container = document.getElementById('logContainer');
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const page = filteredLogs.slice(start, start + PAGE_SIZE);
+
+    if (!filteredLogs.length) {
+      container.innerHTML = `<div class="empty-logs"><div class="empty-icon">📋</div><div>No logs found</div></div>`;
+      document.getElementById('pagination').innerHTML = '';
+      return;
+    }
+
+    const groups = groupByDate(page);
+    let html = '<div class="log-timeline">';
+
+    Object.entries(groups).forEach(([date, logs]) => {
+      html += `<div class="date-group-header">${date}</div>`;
+      logs.forEach(l => {
+        const { icon, cls } = getActionIcon(l.action);
+        const user = l.user_name || l.user_email || 'System';
+        const entity = l.entity_type ? `<span class="log-entity">${l.entity_type}${l.entity_id ? ' #'+l.entity_id.slice(0,8) : ''}</span>` : '';
+        const ip = l.ip_address ? `<span class="log-ip">IP: ${l.ip_address}</span>` : '';
+        const ts = new Date(l.created_at || l.timestamp);
+        const timeStr = isNaN(ts) ? '—' : ts.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit'});
+        const details = l.details ? `<div class="log-meta">${typeof l.details === 'object' ? JSON.stringify(l.details).slice(0,120) : String(l.details).slice(0,120)}</div>` : '';
+
+        html += `
+          <div class="log-entry">
+            <div class="log-dot-wrap">
+              <div class="log-dot ${cls}">${icon}</div>
+            </div>
+            <div class="log-body">
+              <div class="log-action">${l.action || 'Action'}</div>
+              <div class="log-meta">by <strong>${user}</strong> ${entity}</div>
+              ${details}
+              ${ip}
+            </div>
+            <div class="log-time">${timeStr}</div>
+          </div>`;
+      });
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
+    renderPagination();
+  }
+
+  function renderPagination() {
+    const total = Math.ceil(filteredLogs.length / PAGE_SIZE);
+    if (total <= 1) { document.getElementById('pagination').innerHTML = ''; return; }
+    let html = `<button class="page-btn" ${currentPage===1?'disabled':''} onclick="goPage(${currentPage-1})">‹</button>`;
+    for (let i = 1; i <= total; i++) {
+      if (i === 1 || i === total || Math.abs(i-currentPage) <= 1)
+        html += `<button class="page-btn ${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</button>`;
+      else if (Math.abs(i-currentPage) === 2)
+        html += `<span class="page-ellipsis">…</span>`;
+    }
+    html += `<button class="page-btn" ${currentPage===total?'disabled':''} onclick="goPage(${currentPage+1})">›</button>`;
+    document.getElementById('pagination').innerHTML = html;
+  }
+
+  function goPage(p) { currentPage = p; renderLogs(); }
+
+  function exportLogs() {
+    const headers = ['Action','User','Entity','IP','Time'];
+    const rows = filteredLogs.map(l => [
+      l.action || '', l.user_name || l.user_email || '', l.entity_type || '',
+      l.ip_address || '', formatDateTime(l.created_at || l.timestamp)
+    ]);
+    const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+    a.download = `activity-logs-${currentTab}.csv`;
+    a.click();
+  }
+
+  function toggleDropdown() {
+    document.getElementById('dropMenu').classList.toggle('show');
+  }
+  document.addEventListener('click', e => {
+    if (!document.getElementById('profileDropdown')?.contains(e.target))
+      document.getElementById('dropMenu')?.classList.remove('show');
+  });
+
+  // Init user info
+  const me = Auth.getUser();
+  if (me) {
+    const initials = (me.full_name || me.email || 'U').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    document.getElementById('sidebarAvatar').textContent = initials;
+    document.getElementById('topbarAvatar').textContent = initials;
+    document.getElementById('sidebarName').textContent = me.full_name || me.email;
+    document.getElementById('sidebarRole').textContent = me.role?.replace(/_/g,' ') || '';
+    document.getElementById('ddName').textContent = me.full_name || 'User';
+    document.getElementById('ddEmail').textContent = me.email || '';
+    document.getElementById('brandName').textContent = me.company_name || 'CRM';
+  }
+
+  loadLogs();
+</script>
+</body>
+</html>

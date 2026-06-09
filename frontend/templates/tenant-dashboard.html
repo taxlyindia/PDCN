@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Organisation Dashboard – PDCN CRM PDCN</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/static/css/dashboard.css"/>
+<script src="/static/js/app.js"></script>
+<style>
+.plan-bar{background:var(--primary-bg);border:1.5px solid rgba(79,70,229,.18);border-radius:12px;padding:16px 22px;display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.plan-name{font-weight:700;color:var(--gold-light);font-size:14px}
+.plan-meta{font-size:12px;color:var(--ink2);margin-top:2px}
+.usage-pill{display:flex;align-items:center;gap:10px}
+.usage-label{font-size:12px;color:var(--muted)}
+.usage-track{width:120px;height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden}
+.usage-fill{height:100%;background:var(--primary);border-radius:3px}
+.usage-fill.warn{background:var(--warning)}
+.usage-fill.over{background:var(--error)}
+
+.welcome-card{background:linear-gradient(135deg,var(--primary-bg) 0%,#f5f3ff 100%);border:1px solid rgba(79,70,229,.15);border-radius:16px;padding:28px 32px;margin-bottom:24px;position:relative;overflow:hidden}
+.welcome-card::before{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;background:radial-gradient(rgba(200,146,42,.12),transparent 70%);border-radius:50%}
+.welcome-name{font-family:'Outfit',serif;font-size:1.8rem;font-weight:300;color:var(--ink);margin-bottom:6px}
+.welcome-name strong{font-weight:600;color:var(--gold-light)}
+.welcome-sub{font-size:13px;color:var(--ink2);line-height:1.6}
+
+.stat-card-gold{border-radius:12px;padding:20px;position:relative;overflow:hidden;box-shadow:var(--sh1)}
+.stat-card-gold::before{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold,var(--gold)),transparent)}
+.stat-num{font-family:'Outfit',serif;font-size:2.2rem;font-weight:600;color:var(--gold-light);line-height:1}
+.stat-lbl{font-size:12px;color:var(--ink2);margin-top:6px;font-weight:500}
+.stat-icon-wrap{position:absolute;top:16px;right:16px;font-size:22px;opacity:.5}
+
+.quick-link{display:flex;align-items:center;gap:14px;padding:14px 18px;background:var(--primary-bg);border:1px solid var(--border);border-radius:11px;text-decoration:none;color:var(--ink);transition:all .2s;margin-bottom:10px}
+.quick-link:hover{border-color:rgba(79,70,229,.3);background:var(--primary-bg);transform:translateX(4px)}
+.quick-link-icon{width:38px;height:38px;border-radius:9px;background:var(--primary-bg);border:1px solid rgba(79,70,229,.2);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.quick-link-title{font-size:13px;font-weight:600}
+.quick-link-sub{font-size:11px;color:var(--ink2);margin-top:2px}
+.quick-link-arrow{margin-left:auto;color:var(--ink2);font-size:18px}
+
+.role-table{width:100%;border-collapse:collapse}
+.role-table th{padding:9px 14px;font-size:11px;font-weight:600;color:var(--ink2);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);text-align:left}
+.role-table td{padding:11px 14px;font-size:13px;border-bottom:1px solid rgba(30,30,50,.5)}
+.role-badge{display:inline-block;padding:3px 9px;border-radius:5px;font-size:11px;font-weight:600}
+.rb-cn{background:rgba(6,182,212,.15);color:#67e8f9}
+.rb-fin{background:rgba(16,185,129,.15);color:#6ee7b7}
+.rb-cfa{background:rgba(139,92,246,.15);color:#c4b5fd}
+.rb-dealer{background:rgba(236,72,153,.15);color:#f9a8d4}
+.rb-admin{background:rgba(200,146,42,.15);color:var(--gold-light)}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="icon">T</div>
+    <div>
+      <div class="name">PDCN <span>CRM</span></div>
+      <div class="badge">PDCN CRM</div>
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Administration</div>
+    <a class="nav-item active" href="/templates/tenant-dashboard.html"><span class="nav-icon">◈</span>Dashboard</a>
+    <a class="nav-item" href="/templates/tenant-users.html"><span class="nav-icon">◎</span>User Management</a>
+    <a class="nav-item" href="/templates/tenant-profile.html"><span class="nav-icon">◉</span>My Profile</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">PDCN Platform</div>
+    <a class="nav-item" href="/templates/pdcn-dashboard.html"><span class="nav-icon">📋</span>PDCN Dashboard</a>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar" id="t-avatar">TA</div>
+      <div class="user-info"><div class="user-name" id="t-name">Admin</div><div class="user-role" id="t-role">Tenant Admin</div></div>
+      <button class="logout-btn" onclick="logout()">⏻</button>
+    </div>
+  </div>
+</aside>
+
+<div class="main-content">
+  <div class="topbar">
+    <span class="topbar-title" id="topbar-greeting">Organisation Dashboard</span>
+    <div style="font-size:12px;color:var(--muted)" id="topbar-date"></div>
+  </div>
+  <div class="page-content">
+
+    <!-- Welcome -->
+    <div class="welcome-card">
+      <div class="welcome-name">Good <span id="greeting">day</span>, <strong id="user-fname">Admin</strong></div>
+      <div class="welcome-sub">You are managing your organisation's PDCN workflow platform. Use the links below to manage users and claims.</div>
+    </div>
+
+    <!-- Plan bar -->
+    <div class="plan-bar" id="plan-bar" style="display:none">
+      <div>
+        <div class="plan-name" id="plan-name">—</div>
+        <div class="plan-meta" id="plan-meta">—</div>
+      </div>
+      <div style="display:flex;gap:24px;flex-wrap:wrap">
+        <div class="usage-pill">
+          <div class="usage-label">Users</div>
+          <div class="usage-track"><div class="usage-fill" id="users-bar" style="width:0%"></div></div>
+          <div class="usage-label" id="users-count">—</div>
+        </div>
+        <div class="usage-pill" id="claims-pill">
+          <div class="usage-label">Claims this month</div>
+          <div class="usage-track"><div class="usage-fill" id="claims-bar" style="width:0%"></div></div>
+          <div class="usage-label" id="claims-count">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI Stats -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px">
+      <div class="stat-card-gold" style="background:linear-gradient(135deg,#3730a3,#4f46e5)"><div class="stat-icon-wrap" style="position:absolute;top:14px;right:14px;font-size:24px;opacity:.18">👥</div><div class="stat-num" id="s-total">—</div><div class="stat-lbl">Total Users</div></div>
+      <div class="stat-card-gold" style="background:linear-gradient(135deg,#065f46,#059669)"><div class="stat-icon-wrap" style="position:absolute;top:14px;right:14px;font-size:24px;opacity:.18">✅</div><div class="stat-num" id="s-active">—</div><div class="stat-lbl">Active Users</div></div>
+      <div class="stat-card-gold" style="background:linear-gradient(135deg,#991b1b,#dc2626)"><div class="stat-icon-wrap" style="position:absolute;top:14px;right:14px;font-size:24px;opacity:.18">🚫</div><div class="stat-num" id="s-disabled">—</div><div class="stat-lbl">Disabled</div></div>
+      <div class="stat-card-gold" style="background:linear-gradient(135deg,#4c1d95,#7c3aed)"><div class="stat-icon-wrap" style="position:absolute;top:14px;right:14px;font-size:24px;opacity:.18">📝</div><div class="stat-num" id="s-activity">—</div><div class="stat-lbl">Actions (7 days)</div></div>
+    </div>
+
+    <!-- Two column -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <!-- Quick Actions -->
+      <div class="table-card" style="padding:24px">
+        <h3 style="font-family:'Outfit',serif;font-size:1.1rem;font-weight:600;margin-bottom:18px;color:var(--text)">Quick Actions</h3>
+        <a class="quick-link" href="/templates/tenant-users.html">
+          <div class="quick-link-icon">➕</div>
+          <div><div class="quick-link-title">Add New User</div><div class="quick-link-sub">Invite a team member to your organisation</div></div>
+          <div class="quick-link-arrow">›</div>
+        </a>
+        <a class="quick-link" href="/templates/tenant-users.html">
+          <div class="quick-link-icon">👥</div>
+          <div><div class="quick-link-title">Manage Users &amp; Roles</div><div class="quick-link-sub">Assign CN, Finance, CFA, Dealer roles</div></div>
+          <div class="quick-link-arrow">›</div>
+        </a>
+        <a class="quick-link" href="/templates/pdcn-dashboard.html">
+          <div class="quick-link-icon">📋</div>
+          <div><div class="quick-link-title">View PDCN Claims</div><div class="quick-link-sub">Monitor all active claim workflows</div></div>
+          <div class="quick-link-arrow">›</div>
+        </a>
+        <a class="quick-link" href="/templates/tenant-profile.html">
+          <div class="quick-link-icon">🔑</div>
+          <div><div class="quick-link-title">Change Password</div><div class="quick-link-sub">Update your account credentials</div></div>
+          <div class="quick-link-arrow">›</div>
+        </a>
+
+      </div>
+
+      <!-- Role Overview -->
+      <div class="table-card" style="padding:24px">
+        <h3 style="font-family:'Outfit',serif;font-size:1.1rem;font-weight:600;margin-bottom:18px;color:var(--text)">Team Roster</h3>
+        <div style="overflow-x:auto">
+          <table class="role-table" id="role-table">
+            <thead><tr><th>Member</th><th>Role</th><th>Status</th></tr></thead>
+            <tbody id="role-tbody"><tr><td colspan="3" style="text-align:center;padding:20px;color:var(--muted)">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!requireAuth()) return;
+  const user = Auth.getUser();
+  if (user && user.role !== 'tenant_admin') { window.location.href = '/templates/pdcn-dashboard.html'; return; }
+
+  document.getElementById('t-name').textContent = user.full_name;
+  document.getElementById('t-avatar').textContent = (user.full_name||'TA').slice(0,2).toUpperCase();
+  document.getElementById('t-role').textContent = 'Organisation Admin';
+  document.getElementById('user-fname').textContent = user.full_name.split(' ')[0];
+  const h = new Date().getHours();
+  document.getElementById('greeting').textContent = h<12?'morning':h<17?'afternoon':'evening';
+  document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+
+  // Load dashboard stats
+  try {
+    const dash = await api.get('/tenant/dashboard');
+    document.getElementById('s-total').textContent = dash.total_users;
+    document.getElementById('s-active').textContent = dash.active_users;
+    document.getElementById('s-disabled').textContent = dash.disabled_users;
+    document.getElementById('s-activity').textContent = dash.recent_activity;
+  } catch(e) {}
+
+  // Load plan info
+  try {
+    const plan = await api.get('/pricing/my-plan');
+    if (plan.plan) {
+      document.getElementById('plan-bar').style.display = 'flex';
+      document.getElementById('plan-name').textContent = plan.plan.name + ' Plan';
+      document.getElementById('plan-meta').textContent = plan.billing_cycle === 'annual' ? 'Annual billing · All prices exclude GST' : 'Monthly billing · All prices exclude GST';
+
+      const maxU = plan.limits.max_users;
+      const curU = plan.current_users;
+      document.getElementById('users-count').textContent = maxU ? curU+' / '+maxU : curU+' / ∞';
+      if (maxU) {
+        const pct = Math.min(100, Math.round(curU/maxU*100));
+        const bar = document.getElementById('users-bar');
+        bar.style.width = pct+'%';
+        if (pct >= 100) bar.classList.add('over');
+        else if (pct >= 80) bar.classList.add('warn');
+      }
+
+      const maxC = plan.limits.max_claims;
+      const curC = plan.claims_this_month;
+      document.getElementById('claims-count').textContent = maxC ? curC+' / '+maxC : curC+' / ∞';
+      if (maxC) {
+        const pct2 = Math.min(100, Math.round(curC/maxC*100));
+        const bar2 = document.getElementById('claims-bar');
+        bar2.style.width = pct2+'%';
+        if (pct2 >= 100) bar2.classList.add('over');
+        else if (pct2 >= 80) bar2.classList.add('warn');
+      }
+    }
+  } catch(e) {}
+
+  // Load users for role table
+  try {
+    const users = await api.get('/tenant/users?per_page=8');
+    const tbody = document.getElementById('role-tbody');
+    const ROLE_LABELS = {cn_team:'CN Team',finance_team:'Finance',cfa_team:'CFA Team',finance_cfa_team:'Finance+CFA',dealer:'Dealer',tenant_admin:'Admin'};
+    const ROLE_CLASS = {cn_team:'rb-cn',finance_team:'rb-fin',cfa_team:'rb-cfa',finance_cfa_team:'rb-cfa',dealer:'rb-dealer',tenant_admin:'rb-admin'};
+    if (!users.users.length) {
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--muted)">No users yet. <a href="/templates/tenant-users.html" style="color:var(--gold)">Add your first team member →</a></td></tr>';
+    } else {
+      tbody.innerHTML = users.users.map(u =>
+        `<tr><td><div style="font-weight:600;font-size:13px">${u.full_name}</div><div style="font-size:11px;color:var(--muted)">${u.email}</div></td>
+        <td><span class="role-badge ${ROLE_CLASS[u.role]||''}">${ROLE_LABELS[u.role]||u.role}</span></td>
+        <td><span style="font-size:11px;color:${u.status==='active'?'var(--success)':'var(--muted)'}">${u.status==='active'?'● Active':'○ Inactive'}</span></td></tr>`
+      ).join('');
+    }
+  } catch(e) {}
+});
+
+function logout() {
+  const r = Auth.getRefresh();
+  if (r) api.post('/auth/logout', {refresh_token:r}).catch(()=>{});
+  Auth.clear(); window.location.href = '/templates/login.html';
+}
+</script>
+</body>
+</html>

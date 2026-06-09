@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Sales Register Template – PDCN CRM</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/static/css/dashboard.css"/>
+<script src="/static/js/app.js"></script>
+<style>
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px}
+.card-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:700;margin-bottom:16px;color:var(--primary)}
+.field-row{display:grid;grid-template-columns:200px 1fr 100px;gap:0;border-bottom:1px solid var(--border)}
+.field-row:first-child{border-top:1px solid var(--border);border-radius:8px 8px 0 0}
+.field-row:last-child{border-radius:0 0 8px 8px}
+.field-name{padding:10px 14px;font-size:13px;font-weight:600;background:rgba(99,102,241,.06);border-right:1px solid var(--border)}
+.field-desc{padding:10px 14px;font-size:13px;color:var(--muted)}
+.field-req{padding:10px 14px;font-size:12px;font-weight:600;text-align:center}
+.req-yes{color:#ef4444}.req-no{color:var(--muted)}
+.download-btn{display:flex;align-items:center;gap:12px;padding:16px 24px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;transition:all .2s}
+.download-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(99,102,241,.4)}
+.download-btn .icon{font-size:24px}
+.report-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.report-card{background:var(--primary-bg);border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.report-info .title{font-size:14px;font-weight:600;margin-bottom:4px}
+.report-info .desc{font-size:12px;color:var(--muted)}
+.dl-btn{padding:7px 14px;border-radius:7px;background:#6366f1;color:#fff;border:none;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .2s}
+.dl-btn:hover{background:#4f46e5}
+.dl-btn.green{background:#10b981}.dl-btn.green:hover{background:#059669}
+.dl-btn.cyan{background:#06b6d4}.dl-btn.cyan:hover{background:#0891b2}
+.dl-btn.purple{background:#8b5cf6}.dl-btn.purple:hover{background:#7c3aed}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="icon">T</div>
+    <div>
+      <div class="name">PDCN <span>CRM</span></div>
+      <div class="badge">Workflow</div>
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">PDCN Workflow</div>
+    <a class="nav-item" href="/templates/pdcn-dashboard.html"><span class="nav-icon">📊</span>Dashboard</a>
+    <a class="nav-item active" href="/templates/pdcn-sales-template.html"><span class="nav-icon">📥</span>Templates &amp; Reports</a>
+    <a class="nav-item" href="/templates/pdcn-new-claim.html" id="snav-new" style="display:none"><span class="nav-icon">➕</span>New Claim</a>
+    <a class="nav-item" href="/templates/pdcn-sales-register.html" id="snav-sales" style="display:none"><span class="nav-icon">📊</span>Sales Register</a>
+    <a class="nav-item" href="/templates/chat.html"><span class="nav-icon">💬</span>Chat</a>
+    <a class="nav-item" href="/templates/help-videos.html"><span class="nav-icon">🎓</span>Help &amp; Training</a>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar" id="t-avatar">U</div>
+      <div class="user-info"><div class="user-name" id="t-name">User</div><div class="user-role" id="t-role">—</div></div>
+      <button class="logout-btn" id="logout-btn">⏻</button>
+    </div>
+  </div>
+</aside>
+
+<div class="main-content">
+  <div class="topbar"><span class="topbar-title">Templates &amp; Reports</span></div>
+  <div class="page-content">
+
+    <!-- Download Template -->
+    <div class="card" id="template-section">
+      <div class="card-title">📥 Download Sales Register Template</div>
+      <p style="font-size:13px;color:var(--ink2);margin:0 0 20px">
+        Download the official Excel template to prepare your monthly sales register.
+        Fill in the required columns and upload on the Sales Register page.
+      </p>
+      <button class="download-btn" onclick="downloadTemplate()">
+        <span class="icon">📊</span>
+        <div>
+          <div>Download Sales Register Template</div>
+          <div style="font-size:12px;font-weight:400;opacity:.8;margin-top:2px">Excel (.xlsx) — Pre-formatted with all required columns</div>
+        </div>
+      </button>
+    </div>
+
+    <!-- Column Reference -->
+    <div class="card" id="colref-section">
+      <div class="card-title">📋 Required Columns Reference</div>
+      <p style="font-size:13px;color:var(--ink2);margin:0 0 14px">All columns that must be present in the Sales Register file for successful upload.</p>
+      <div style="border-radius:8px;overflow:hidden">
+        <div class="field-row" style="background:var(--blue-pale)">
+          <div class="field-name" style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Column Name</div>
+          <div class="field-desc" style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Description / Example</div>
+          <div class="field-req" style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)">Required</div>
+        </div>
+        <div class="field-row"><div class="field-name">Invoice No</div><div class="field-desc">Unique invoice number — e.g. INV-2024-001</div><div class="field-req req-yes">✓ Yes</div></div>
+        <div class="field-row"><div class="field-name">Invoice Date</div><div class="field-desc">Date of invoice — YYYY-MM-DD or DD/MM/YYYY</div><div class="field-req req-yes">✓ Yes</div></div>
+        <div class="field-row"><div class="field-name">Dealer Name</div><div class="field-desc">Full name of the dealer — e.g. Ravi Traders</div><div class="field-req req-yes">✓ Yes</div></div>
+        <div class="field-row"><div class="field-name">Dealer Code</div><div class="field-desc">Internal dealer code — e.g. DLR-001</div><div class="field-req req-no">Optional</div></div>
+        <div class="field-row"><div class="field-name">Product Name</div><div class="field-desc">Full product name — e.g. Paracetamol 500mg</div><div class="field-req req-yes">✓ Yes</div></div>
+        <div class="field-row"><div class="field-name">Product Code</div><div class="field-desc">Product SKU / code — e.g. PARA-500</div><div class="field-req req-yes">✓ Yes</div></div>
+        <div class="field-row"><div class="field-name">Batch No</div><div class="field-desc">Manufacturing batch number — e.g. BT2024001</div><div class="field-req req-no">Optional</div></div>
+        <div class="field-row"><div class="field-name">Quantity</div><div class="field-desc">Number of units sold — e.g. 100</div><div class="field-req req-yes">✓ Yes</div></div>
+        <div class="field-row"><div class="field-name">Rate</div><div class="field-desc">Per-unit invoice rate — e.g. 45.50</div><div class="field-req req-yes">✓ Yes</div></div>
+        <div class="field-row"><div class="field-name">Tax</div><div class="field-desc">Tax percentage — e.g. 12 (for 12%)</div><div class="field-req req-no">Optional</div></div>
+        <div class="field-row"><div class="field-name">Net Amount</div><div class="field-desc">Total invoice amount — e.g. 5096.00</div><div class="field-req req-no">Optional</div></div>
+      </div>
+    </div>
+
+    <!-- Excel Reports -->
+    <div class="card">
+      <div class="card-title">📊 Download Reports</div>
+      <p id="report-section-desc" style="font-size:13px;color:var(--ink2);margin:0 0 16px">Download Excel reports for your role. Exports reflect your role-based data access.</p>
+      <div class="report-grid" id="reports-grid">
+        <!-- rendered by JS based on role -->
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  var u = getUser();
+  if(!u||!getToken()){ window.location.href='/templates/login.html'; return; }
+  document.getElementById('t-name').textContent = u.full_name||'';
+  document.getElementById('t-avatar').textContent = (u.full_name||'U').slice(0,2).toUpperCase();
+  document.getElementById('t-role').textContent = (u.role||'').replace(/_/g,' ');
+  if(u.company_name) document.getElementById('t-company').textContent = u.company_name;
+  document.getElementById('logout-btn').onclick = doLogout;
+  // Redirect tenant_admin to their own area
+  if(u.role === 'tenant_admin'){ window.location.href='/templates/tenant-dashboard.html'; return; }
+  // Finance roles: show sales register nav
+  if(['finance_team','finance_cfa_team'].includes(u.role)){
+    var ss=document.getElementById('snav-sales');if(ss)ss.style.display='';
+  }
+  // Dealer: show new claim nav
+  if(u.role==='dealer'){ var sn2=document.getElementById('snav-new');if(sn2)sn2.style.display=''; }
+  renderReports(u.role);
+
+  // Update page heading based on role
+  var isFinance = ['finance_team','finance_cfa_team'].includes(u.role);
+  var templateSection = document.getElementById('template-section');
+  var colRefSection = document.getElementById('colref-section');
+  var reportTitle = document.getElementById('report-section-title');
+  var reportDesc = document.getElementById('report-section-desc');
+
+  if(!isFinance){
+    // Hide template download and column reference for non-finance
+    if(templateSection) templateSection.style.display='none';
+    if(colRefSection) colRefSection.style.display='none';
+  }
+
+  var roleDescs = {
+    cn_team: 'Download your Claims and Line Items reports. Reports show only CN-stage data with CN Team remarks.',
+    cfa_team: 'Download your Claims and Line Items reports. Reports show Finance-approved claims with Finance & CFA remarks.',
+    dealer: 'Download your own Claims and Line Items reports. All approval remarks are visible for your reference.'
+  };
+  if(reportDesc && roleDescs[u.role]) reportDesc.textContent = roleDescs[u.role];
+});
+
+function getToken(){ return localStorage.getItem('access_token'); }
+function getUser(){ try{ return JSON.parse(localStorage.getItem('user')||'null'); }catch{ return null; } }
+function doLogout(){ localStorage.clear(); window.location.href='/templates/login.html'; }
+
+function renderReports(role){
+  var reports = [];
+
+  // Everyone gets Claims report
+  reports.push({
+    icon:'📄',title:'PDCN Claims Report',
+    desc:'All claims with status, amounts, remarks',
+    url:'/api/v1/reports/claims/excel',color:''
+  });
+  reports.push({
+    icon:'📦',title:'Line Items Report',
+    desc:'All invoice line items with rates & amounts',
+    url:'/api/v1/reports/line-items/excel',color:'green'
+  });
+
+  // Finance / CN / Admin get sales register & qty utilization
+  if(['finance_team','finance_cfa_team','cn_team','tenant_admin','super_admin'].includes(role)){
+    reports.push({
+      icon:'📊',title:'Sales Register Export',
+      desc:'Full uploaded sales register data',
+      url:'/api/v1/reports/sales-register/excel',color:'cyan'
+    });
+    reports.push({
+      icon:'🔢',title:'Qty Utilization Report',
+      desc:'Invoice-wise claimed vs balance qty',
+      url:'/api/v1/reports/qty-utilization/excel',color:'purple'
+    });
+  }
+
+  document.getElementById('reports-grid').innerHTML = reports.map(function(r){
+    return '<div class="report-card">'+
+      '<div style="display:flex;align-items:center;gap:12px">'+
+        '<div style="font-size:28px">'+r.icon+'</div>'+
+        '<div class="report-info"><div class="title">'+r.title+'</div><div class="desc">'+r.desc+'</div></div>'+
+      '</div>'+
+      '<button class="dl-btn '+r.color+'" onclick="downloadReport(\''+r.url+'\')">⬇ Export</button>'+
+    '</div>';
+  }).join('');
+}
+
+async function downloadReport(url){
+  try{
+    var res = await fetch(url, {headers:{'Authorization':'Bearer '+getToken()}});
+    if(!res.ok){ var e=await res.json(); alert(e.detail||'Download failed'); return; }
+    var blob = await res.blob();
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    var cd = res.headers.get('content-disposition')||'';
+    var fname = cd.match(/filename="([^"]+)"/);
+    a.download = fname ? fname[1] : 'report.xlsx';
+    a.click();
+  }catch(e){ alert(e.message); }
+}
+
+async function downloadTemplate(){
+  // Generate template Excel client-side using SheetJS-style approach
+  // We build it server-side via a dedicated endpoint
+  downloadReport('/api/v1/reports/template/excel');
+}
+</script>
+</body>
+</html>

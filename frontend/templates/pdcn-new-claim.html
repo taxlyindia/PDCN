@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>New PDCN Claim – CRM</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/static/css/dashboard.css"/>
+<script src="/static/js/app.js"></script>
+<style>
+.form-section{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:24px;margin-bottom:18px;box-shadow:var(--s0)}
+.fs-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;color:var(--primary);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.fg{display:flex;flex-direction:column;gap:5px}
+.fl{font-size:11px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.06em}
+.fi,.fs{padding:8px 11px;border-radius:7px;border:1.5px solid var(--border-2);background:#fff;color:var(--tx-1);font-size:13.5px;font-family:'Nunito',sans-serif;width:100%;box-sizing:border-box;transition:border .15s}
+.fi:focus,.fs:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(79,70,229,.1)}
+
+/* Line items table */
+.lt-wrap{overflow-x:auto;margin-top:10px;max-width:100%}
+table.lt{border-collapse:collapse;min-width:1600px;width:100%}
+table.lt th{
+  padding:8px 7px;font-size:10px;font-weight:700;color:#fff;
+  background:var(--side-bg);text-transform:uppercase;letter-spacing:.05em;
+  border:1px solid rgba(255,255,255,.1);white-space:nowrap;text-align:center
+}
+table.lt td{padding:4px 5px;border:1px solid var(--border);vertical-align:middle}
+table.lt input,table.lt select{
+  padding:6px 7px;border-radius:5px;border:1px solid var(--border);
+  background:var(--primary-bg);color:var(--tx-1);font-size:12.5px;
+  font-family:'Nunito',sans-serif;width:100%;box-sizing:border-box
+}
+table.lt input:focus,table.lt select:focus{outline:none;border-color:var(--primary);background:#fff}
+table.lt input[type=checkbox]{width:16px;height:16px;accent-color:var(--primary);cursor:pointer}
+.td-sno{font-size:12px;font-weight:700;color:var(--tx-3);text-align:center;padding:0 6px}
+.td-diff{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--primary);font-weight:700;text-align:right;padding:4px 8px}
+.td-total{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:800;color:var(--green);text-align:right;padding:4px 8px}
+
+/* Upload zone */
+.upload-zone{border:2px dashed rgba(79,70,229,.3);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--primary-bg)}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--primary);background:var(--primary-bg)}
+.upload-zone p{color:var(--tx-3);font-size:13px;margin:6px 0 0}
+.file-item{display:flex;align-items:center;justify-content:space-between;padding:7px 12px;background:var(--primary-bg);border:1px solid var(--border);border-radius:7px;font-size:12.5px;margin-top:6px}
+.file-rm{background:none;border:none;color:var(--red);cursor:pointer;font-size:15px}
+
+/* Summary bar */
+.summary-bar{background:linear-gradient(135deg,#1e1b4b,#3730a3);border-radius:12px;padding:18px 24px;display:flex;gap:32px;justify-content:flex-end;align-items:center;margin-top:14px}
+.sb-item{text-align:right}
+.sb-lbl{font-size:10.5px;color:rgba(255,255,255,.65);font-weight:600;text-transform:uppercase;letter-spacing:.07em}
+.sb-val{font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;font-weight:800;color:#fff;line-height:1.1}
+
+/* Excel upload section */
+.excel-upload-zone{border:2px dashed rgba(5,150,105,.3);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;background:#f0fdf4}
+.excel-upload-zone:hover,.excel-upload-zone.drag{border-color:var(--green);background:#dcfce7}
+
+.err-msg{color:var(--red);font-size:13px;display:none;margin-top:6px}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo"><div class="icon">T</div><div><div class="name">PDCN <span>CRM</span></div><div class="badge">Workflow</div></div></div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">PDCN Workflow</div>
+    <a class="nav-item" href="/templates/pdcn-dashboard.html"><span class="nav-icon">📊</span>Dashboard</a>
+    <a class="nav-item active" href="/templates/pdcn-new-claim.html"><span class="nav-icon">➕</span>New Claim</a>
+    <a class="nav-item" href="/templates/chat.html"><span class="nav-icon">💬</span>Chat</a>
+    <a class="nav-item" href="/templates/pdcn-sales-template.html"><span class="nav-icon">📥</span>Templates &amp; Reports</a>
+    <a class="nav-item" href="/templates/help-videos.html"><span class="nav-icon">🎓</span>Help &amp; Training</a>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar" id="t-avatar">U</div>
+      <div class="user-info"><div class="user-name" id="t-name">User</div><div class="user-role" id="t-role">Dealer</div></div>
+      <button class="logout-btn" id="logout-btn">⏻</button>
+    </div>
+  </div>
+</aside>
+
+<div class="main-content">
+  <div class="topbar">
+    <span class="topbar-title">New PDCN Claim</span>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost btn-sm" onclick="window.location.href='/templates/pdcn-dashboard.html'">← Back</button>
+      <button class="btn btn-ghost btn-sm" onclick="saveDraft()" id="save-draft-btn">💾 Save Draft</button>
+      <button class="btn btn-primary" onclick="submitClaim()" id="submit-btn">📤 Submit Claim</button>
+    </div>
+  </div>
+
+  <div class="page-content">
+    <div id="global-error" style="display:none;padding:12px 16px;background:var(--red-l);border:1px solid var(--red-t);border-radius:8px;color:var(--red);margin-bottom:16px;font-size:13px"></div>
+
+    <!-- Claim Header -->
+    <div class="form-section">
+      <div class="fs-title">📋 Claim Header</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px">
+        <div class="fg"><label class="fl">Distributor Name *</label><input class="fi" id="dealer-name" placeholder="Distributor name"/></div>
+        <div class="fg"><label class="fl">SAP Code</label><input class="fi" id="dealer-code" placeholder="e.g. 10023675" readonly/></div>
+        <div class="fg"><label class="fl">Business Group</label><input class="fi" id="business-group" placeholder="e.g. S.E.T, Recon" readonly/></div>
+        <div class="fg"><label class="fl">Region</label><input class="fi" id="region" placeholder="e.g. North"/></div>
+        <div class="fg"><label class="fl">City</label><input class="fi" id="city" placeholder="City" readonly/></div>
+        <div class="fg"><label class="fl">State</label><input class="fi" id="state" placeholder="State"/></div>
+        <div class="fg"><label class="fl">Credit Check</label>
+          <select class="fs" id="credit-check">
+            <option value="">Select</option>
+            <option value="Green">🟢 Green</option>
+            <option value="Red">🔴 Red</option>
+          </select>
+        </div>
+        <div class="fg"><label class="fl">Sales Representative</label><input class="fi" id="sales-person" placeholder="Sales rep name"/></div>
+        <div class="fg"><label class="fl">Claim Month</label>
+          <select class="fs" id="claim-month">
+            <option>January</option><option>February</option><option>March</option><option>April</option>
+            <option>May</option><option>June</option><option>July</option><option>August</option>
+            <option>September</option><option>October</option><option>November</option><option>December</option>
+          </select>
+        </div>
+        <div class="fg"><label class="fl">Claim Year</label><input class="fi" id="claim-year" type="number" min="2020" max="2030"/></div>
+        <div class="fg"><label class="fl">Claim Type</label>
+          <select class="fs" id="claim-type">
+            <option value="special_discount">Special Discount</option>
+            <option value="pdcn">PDCN</option>
+            <option value="price_differential">Price Differential</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Line Items -->
+    <div class="form-section">
+      <div class="fs-title" style="justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <span>📦 Line Items</span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-ghost btn-sm" onclick="downloadTemplate()">⬇ Download Template</button>
+          <label class="btn btn-success btn-sm" style="cursor:pointer;margin:0">
+            📤 Upload Excel
+            <input type="file" id="excel-upload" accept=".xlsx,.xls" style="display:none" onchange="uploadExcel(this)"/>
+          </label>
+          <button class="btn btn-primary btn-sm" onclick="addRow()">+ Add Row</button>
+        </div>
+      </div>
+
+      <div style="background:#f0fdf4;border:1px solid var(--green-t);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--green);margin-bottom:12px">
+        💡 You can fill rows manually below, or upload an Excel file using the template. Excel upload replaces all existing rows.
+      </div>
+
+      <div class="lt-wrap">
+        <table class="lt">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th style="min-width:130px">Material Code</th>
+              <th>Brand Code</th>
+              <th style="min-width:140px">Invoice No</th>
+              <th>Manual?</th>
+              <th style="min-width:120px">Invoice Date</th>
+              <th style="min-width:200px">Product Name</th>
+              <th>Product Code</th>
+              <th>Qty</th>
+              <th style="min-width:110px">Purchase Price (A)</th>
+              <th style="min-width:110px">Allowed SD Price (B)</th>
+              <th style="min-width:110px">Billed To</th>
+              <th style="min-width:110px">Billed Date</th>
+              <th style="min-width:120px">Dealer Invoice No</th>
+              <th style="min-width:110px">Dealer Invoice Price</th>
+              <th style="min-width:110px">Diff Price (A-B)*C</th>
+              <th>CN Type</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="items-tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="summary-bar">
+        <div class="sb-item"><div class="sb-lbl">Requested Discount Qty</div><div class="sb-val" id="total-qty">0</div></div>
+        <div class="sb-item"><div class="sb-lbl">Total Claim Amount</div><div class="sb-val" id="total-amount">₹0.00</div></div>
+      </div>
+    </div>
+
+    <!-- Finance Executive Documents -->
+    <div class="form-section">
+      <div class="fs-title">📎 Finance Executive Documents</div>
+      <div class="upload-zone" onclick="document.getElementById('fin-docs').click()"
+           ondragover="this.classList.add('drag');event.preventDefault()"
+           ondragleave="this.classList.remove('drag')"
+           ondrop="this.classList.remove('drag');handleDrop(event,'fin-docs-list',event.dataTransfer.files)">
+        <div style="font-size:28px">📁</div>
+        <p>Click or drag &amp; drop documents here</p>
+        <p style="font-size:11px;color:var(--tx-4)">PDF, Excel, Images — Max 10MB each</p>
+      </div>
+      <input type="file" id="fin-docs" multiple accept=".pdf,.jpg,.jpeg,.png,.xlsx,.xls" style="display:none" onchange="handleFiles(this.files,'fin-docs-list')"/>
+      <div id="fin-docs-list"></div>
+    </div>
+
+    <!-- Credit Note Documents -->
+    <div class="form-section">
+      <div class="fs-title">📄 Supporting / Credit Note Documents</div>
+      <div class="upload-zone" onclick="document.getElementById('cn-docs').click()"
+           ondragover="this.classList.add('drag');event.preventDefault()"
+           ondragleave="this.classList.remove('drag')"
+           ondrop="this.classList.remove('drag');handleDrop(event,'cn-docs-list',event.dataTransfer.files)">
+        <div style="font-size:28px">📋</div>
+        <p>Click or drag &amp; drop credit note PDFs or supporting docs</p>
+      </div>
+      <input type="file" id="cn-docs" multiple accept=".pdf,.jpg,.jpeg,.png,.xlsx" style="display:none" onchange="handleFiles(this.files,'cn-docs-list')"/>
+      <div id="cn-docs-list"></div>
+    </div>
+
+    <!-- Justification -->
+    <div class="form-section">
+      <div class="fs-title">📝 Justification</div>
+      <div class="fg"><label class="fl">Justification Notes</label><textarea class="fi" id="justification" rows="3" style="resize:vertical"></textarea></div>
+      <div style="margin-top:14px">
+        <div style="font-size:12px;color:var(--tx-3);line-height:1.7;padding:12px 14px;background:var(--surface-2);border-radius:8px;border:1px solid var(--border)">
+          <strong>Declaration:</strong> By submitting this claim, the Distributor confirms that: (i) it shall not breach any permissible margins mandated by applicable laws; and (ii) all invoices and documentation submitted are accurate and genuine. The Distributor assumes full liability for, and agrees to fully indemnify the company against, all costs (direct and indirect), penalties, and damages arising from non-compliance or misrepresentation.
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /page-content -->
+</div>
+
+<script>
+var claimId = null;
+var rowCount = 0;
+var finDocs = [], cnDocs = [];
+var currentUser = null;
+
+document.addEventListener('DOMContentLoaded', function(){
+  if(!requireAuth()) return;
+  currentUser = Auth.getUser();
+  if(!currentUser){ window.location.href='/templates/login.html'; return; }
+
+  document.getElementById('t-name').textContent = currentUser.full_name||'';
+  document.getElementById('t-avatar').textContent = (currentUser.full_name||'U').slice(0,2).toUpperCase();
+  document.getElementById('t-role').textContent = (currentUser.role||'').replace(/_/g,' ');
+  document.getElementById('logout-btn').onclick = logout;
+
+  // Pre-fill dealer info from user profile
+  var u = currentUser;
+  document.getElementById('dealer-name').value = u.distributor_name || u.full_name || '';
+  document.getElementById('dealer-code').value = u.sap_code || '';
+  document.getElementById('business-group').value = u.business_group || '';
+  document.getElementById('region').value = u.region || '';
+  document.getElementById('city').value = u.city || '';
+  document.getElementById('state').value = u.state || '';
+  document.getElementById('credit-check').value = u.credit_check || '';
+
+  // Set default date fields
+  var now = new Date();
+  document.getElementById('claim-year').value = now.getFullYear();
+  document.getElementById('claim-month').selectedIndex = now.getMonth();
+
+  addRow();
+  // Check if Finance has uploaded sales register for any month
+  checkAvailableMonths();
+});
+
+async function checkAvailableMonths(){
+  try{
+    var data = await api('/pdcn/sales-register/available-months');
+    var months = data.months || [];
+
+    // Populate claim month dropdown — only show available months if any exist
+    var monthSel = document.getElementById('claim-month');
+    var yearInp  = document.getElementById('claim-year');
+
+    if(months.length === 0){
+      // No sales register uploaded yet — show blocking warning
+      showGlobalMsg(
+        '⚠️ No sales register has been uploaded by the Finance Team yet. ' +
+        'You can still submit a claim by marking ALL line items as Manual Invoices.',
+        'warning'
+      );
+      // Don't hard-disable — let manual checkbox logic control it
+      return;
+    }
+
+    // Build available keys for quick lookup
+    var availableKeys = months.map(function(m){ return m.batch_key; });
+
+    // Mark dropdown with available months
+    var monthNames = ['January','February','March','April','May','June',
+                      'July','August','September','October','November','December'];
+    // Check currently selected month/year
+    function allRowsManual(){
+      // Returns true if at least 1 row exists AND all rows have manual checkbox ticked
+      var anyRow = false;
+      for(var i=1;i<=rowCount;i++){
+        if(!document.getElementById('row-'+i)) continue;
+        anyRow = true;
+        if(!document.getElementById('manual_'+i).checked) return false;
+      }
+      return anyRow;
+    }
+
+    function validateSelectedMonth(){
+      var mIdx = monthSel.selectedIndex + 1;
+      var yr   = yearInp.value;
+      if(!yr) return;
+      var key = yr + '-' + String(mIdx).padStart(2,'0');
+      var avail = availableKeys.indexOf(key) >= 0;
+      var allManual = allRowsManual();
+      var mn = monthNames[mIdx-1] + ' ' + yr;
+
+      var warnEl = document.getElementById('month-warn');
+      if(!warnEl){
+        warnEl = document.createElement('div');
+        warnEl.id = 'month-warn';
+        warnEl.style.cssText = 'font-size:12.5px;margin-top:6px;padding:8px 12px;border-radius:7px;display:none';
+        monthSel.parentNode.appendChild(warnEl);
+      }
+
+      if(avail){
+        // SR uploaded for this month — fully clear
+        warnEl.innerHTML = '✅ Sales register for <strong>' + mn + '</strong> is available.';
+        warnEl.style.display = 'block';
+        warnEl.style.background = 'var(--green-l)';
+        warnEl.style.color = 'var(--green)';
+        warnEl.style.border = '1px solid var(--green-t)';
+        document.getElementById('submit-btn').disabled = false;
+        document.getElementById('save-draft-btn').disabled = false;
+      } else if(allManual){
+        // SR missing BUT all rows are manual — bypass allowed
+        warnEl.innerHTML = '✅ All line items are marked as <strong>Manual Invoices</strong>. ' +
+          'Sales register not required for manual claims.';
+        warnEl.style.display = 'block';
+        warnEl.style.background = 'var(--green-l)';
+        warnEl.style.color = 'var(--green)';
+        warnEl.style.border = '1px solid var(--green-t)';
+        document.getElementById('submit-btn').disabled = false;
+        document.getElementById('save-draft-btn').disabled = false;
+      } else {
+        // SR missing and not all manual
+        var availList = months.map(function(m){ return m.month_label||m.batch_key; }).join(', ');
+        warnEl.innerHTML =
+          '<strong>⚠ Sales register for ' + mn + ' not uploaded yet.</strong><br>' +
+          (availList ? 'Available: <strong>' + availList + '</strong>. ' : '') +
+          'To proceed without a sales register, tick <strong>Manual Invoice</strong> on <em>all</em> line items.';
+        warnEl.style.display = 'block';
+        warnEl.style.background = 'var(--red-l)';
+        warnEl.style.color = 'var(--red)';
+        warnEl.style.border = '1px solid var(--red-t)';
+        document.getElementById('submit-btn').disabled = true;
+        document.getElementById('save-draft-btn').disabled = true;
+      }
+    }
+
+    monthSel.addEventListener('change', validateSelectedMonth);
+    yearInp.addEventListener('change',  validateSelectedMonth);
+    validateSelectedMonth();
+
+    // Show all available months info
+    showGlobalMsg(
+      '✅ Finance has uploaded sales registers for: ' +
+      months.map(function(m){ return m.month_label||m.batch_key; }).join(', ') +
+      '. Select the claim month and validate below.',
+      'success'
+    );
+    setTimeout(function(){
+      var el = document.getElementById('global-error');
+      if(el && el.style.color === 'var(--green)') el.style.display='none';
+    }, 6000);
+
+  }catch(e){
+    // If endpoint fails, don't block — just warn
+    console.warn('Could not check available months:', e.message);
+  }
+}
+
+// ── Add table row ─────────────────────────────────────────────
+function addRow(){
+  rowCount++;
+  var r = rowCount;
+  var tr = document.createElement('tr');
+  tr.id = 'row-' + r;
+  tr.innerHTML =
+    '<td class="td-sno">'+r+'</td>'+
+    '<td><input type="text" placeholder="42-5320-064-01" id="sap_'+r+'"/></td>'+
+    '<td><input type="text" placeholder="8457" style="width:70px" id="brand_'+r+'"/></td>'+
+    '<td><input type="text" placeholder="Invoice No" id="invoice_'+r+'" oninput="recalc('+r+')"/></td>'+
+    '<td style="text-align:center"><input type="checkbox" id="manual_'+r+'" title="Manual Invoice?" onchange="validateSelectedMonth&&validateSelectedMonth()"/></td>'+
+    '<td><input type="date" id="idate_'+r+'"/></td>'+
+    '<td><input type="text" placeholder="Product Name" id="pname_'+r+'"/></td>'+
+    '<td><input type="text" placeholder="Code" style="width:90px" id="pcode_'+r+'"/></td>'+
+    '<td><input type="number" min="1" value="1" style="width:60px" id="qty_'+r+'" oninput="recalc('+r+')"/></td>'+
+    '<td><input type="number" step="0.01" placeholder="0" style="width:90px" id="pprice_'+r+'" oninput="recalc('+r+')"/></td>'+
+    '<td><input type="number" step="0.01" placeholder="0" style="width:90px" id="sdprice_'+r+'" oninput="recalc('+r+')"/></td>'+
+    '<td><input type="text" placeholder="Hospital name" id="billedto_'+r+'"/></td>'+
+    '<td><input type="date" id="billeddate_'+r+'"/></td>'+
+    '<td><input type="text" placeholder="Dealer Inv No" id="dinv_'+r+'"/></td>'+
+    '<td><input type="number" step="0.01" placeholder="Sell price" style="width:90px" id="sprice_'+r+'" oninput="recalc('+r+')"/></td>'+
+    '<td class="td-diff" id="diff_'+r+'" style="color:var(--green);font-weight:800">0</td>'+
+    '<td><select style="width:70px" id="cntype_'+r+'"><option>CR1</option><option>CR2</option><option>CR3</option></select></td>'+
+
+    '<td><button onclick="removeRow('+r+')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px">✕</button></td>';
+  document.getElementById('items-tbody').appendChild(tr);
+  // Re-validate month after adding row (new row starts as non-manual)
+  if(typeof validateSelectedMonth === 'function'){
+    try{ validateSelectedMonth(); }catch(e){}
+  }
+}
+
+function recalc(r){
+  // Re-run month validation whenever a row changes (manual checkbox may have changed)
+  if(typeof validateSelectedMonth === 'function') {
+    try{ validateSelectedMonth(); }catch(e){}
+  }
+  var purchPrice = parseFloat(document.getElementById('pprice_'+r).value)||0;
+  var sdPrice    = parseFloat(document.getElementById('sdprice_'+r).value)||0;
+  var qty        = parseInt(document.getElementById('qty_'+r).value)||1;
+  // Diff Price = (Purchase Price - Allowed SD Price) × Qty
+  var diff = (purchPrice - sdPrice) * qty;
+  document.getElementById('diff_'+r).textContent = diff > 0
+    ? '₹'+diff.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})
+    : diff.toFixed(2);
+  updateTotals();
+}
+
+function updateTotals(){
+  var totalQty=0, totalAmt=0;
+  for(var i=1;i<=rowCount;i++){
+    var row=document.getElementById('row-'+i);
+    if(!row) continue;
+    var qty  = parseInt(document.getElementById('qty_'+i).value)||0;
+    var purch = parseFloat(document.getElementById('pprice_'+i).value)||0;
+    var sd    = parseFloat(document.getElementById('sdprice_'+i).value)||0;
+    totalQty += qty;
+    totalAmt += (purch - sd) * (qty||1);  // sum of diff prices
+  }
+  document.getElementById('total-qty').textContent = totalQty;
+  document.getElementById('total-amount').textContent = '₹'+totalAmt.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+function removeRow(r){
+  var row = document.getElementById('row-'+r);
+  if(row) row.remove();
+  updateTotals();
+  // Re-validate — removing a non-manual row might now make all remaining rows manual
+  if(typeof validateSelectedMonth === 'function'){
+    try{ validateSelectedMonth(); }catch(e){}
+  }
+}
+
+
+
+// ── Claim-level docs ──────────────────────────────────────────
+function handleFiles(files, listId){
+  var list = listId==='fin-docs-list' ? finDocs : cnDocs;
+  Array.from(files).forEach(function(f){ list.push(f); });
+  renderFileList(listId);
+}
+function handleDrop(e, listId, files){ e.preventDefault(); handleFiles(files, listId); }
+function renderFileList(listId){
+  var list = listId==='fin-docs-list' ? finDocs : cnDocs;
+  var el = document.getElementById(listId);
+  el.innerHTML = list.map(function(f,i){
+    return '<div class="file-item">'+
+      '<span>📄 '+f.name+'</span>'+
+      '<button class="file-rm" onclick="removeFile(\''+listId+'\','+i+')">✕</button>'+
+    '</div>';
+  }).join('');
+}
+function removeFile(listId, idx){
+  if(listId==='fin-docs-list') finDocs.splice(idx,1);
+  else cnDocs.splice(idx,1);
+  renderFileList(listId);
+}
+
+// ── Excel template download (with auth) ──────────────────────
+async function downloadTemplate(){
+  try{
+    var res = await fetch('/api/v1/pdcn/line-items-template/excel', {
+      headers:{'Authorization':'Bearer '+Auth.getAccess()}
+    });
+    if(!res.ok){
+      var e = await res.json().catch(function(){return{detail:'Download failed'};});
+      showToast(e.detail||'Download failed','error'); return;
+    }
+    var blob = await res.blob();
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'LineItems_Template.xlsx';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+  }catch(e){ showToast(e.message,'error'); }
+}
+
+// ── Excel upload ──────────────────────────────────────────────
+async function uploadExcel(input){
+  var file = input.files[0];
+  if(!file) return;
+  if(!claimId){
+    // Create draft first
+    var saved = await saveDraft();
+    if(!saved) return;
+  }
+  showGlobalMsg('Uploading Excel…','info');
+  var fd = new FormData();
+  fd.append('file', file);
+  try{
+    var res = await fetch('/api/v1/pdcn/claims/'+claimId+'/items/excel-upload',{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+Auth.getAccess()},
+      body:fd
+    });
+    if(!res.ok){
+      var e = await res.json().catch(function(){return{detail:'Upload failed'};});
+      throw new Error(e.detail||'Upload failed');
+    }
+    var data = await res.json();
+    showToast('Uploaded '+data.uploaded+' line items from Excel','success');
+    hideGlobalMsg();
+    // Reload the claim to show items
+    await loadDraftItems(claimId);
+  }catch(err){
+    showGlobalMsg((err&&err.message)?err.message:String(err),'error');
+  }
+  input.value='';
+}
+
+async function loadDraftItems(id){
+  try{
+    var d = await api('/pdcn/claims/'+id+'?include_items=true');
+    // Clear current rows and reload
+    document.getElementById('items-tbody').innerHTML='';
+    rowCount=0;
+    var items = d.line_items||[];
+    if(!items.length){ addRow(); return; }
+    items.forEach(function(item){
+      addRow();
+      var r=rowCount;
+      setVal('sap_'+r, item.sap_material_code||'');
+      setVal('brand_'+r, item.brand_code||'');
+      setVal('invoice_'+r, item.invoice_no||'');
+      document.getElementById('manual_'+r).checked = item.is_manual_invoice;
+      setVal('idate_'+r, item.invoice_date?(item.invoice_date.split('T')[0]):'');
+      setVal('pname_'+r, item.product_name||'');
+      setVal('pcode_'+r, item.product_code||'');
+      setVal('qty_'+r, item.quantity||1);
+      setVal('pprice_'+r, item.purchase_price||'');
+      setVal('sdprice_'+r, item.invoice_rate||'');
+      setVal('sprice_'+r, item.claim_rate||'');
+      setVal('dinv_'+r, item.dealer_invoice_no||'');
+      setVal('billedto_'+r, item.billed_to||'');
+      setVal('billeddate_'+r, item.billed_date?(item.billed_date.split('T')[0]):'');
+      var cnSel = document.getElementById('cntype_'+r);
+      if(cnSel) cnSel.value = item.credit_note_type||'CR1';
+      recalc(r);
+    });
+  }catch(e){ console.warn('loadDraftItems',e); }
+}
+
+function setVal(id, val){ var el=document.getElementById(id); if(el) el.value=val||''; }
+
+// ── Collect items from table ──────────────────────────────────
+function collectItems(){
+  var items=[];
+  for(var i=1;i<=rowCount;i++){
+    var row=document.getElementById('row-'+i);
+    if(!row) continue;
+    var pname = (document.getElementById('pname_'+i).value||'').trim();
+    if(!pname) continue;
+    var purchprice = parseFloat(document.getElementById('pprice_'+i).value)||0;
+    var sdprice = parseFloat(document.getElementById('sdprice_'+i).value)||0;
+    var sprice  = parseFloat(document.getElementById('sprice_'+i).value)||0;
+    var qty     = parseInt(document.getElementById('qty_'+i).value)||1;
+    var diffAmt = (purchprice - sdprice) * qty;   // (A-B)*C
+    items.push({
+      sap_material_code: document.getElementById('sap_'+i).value.trim(),
+      brand_code:        document.getElementById('brand_'+i).value.trim(),
+      invoice_no:        document.getElementById('invoice_'+i).value.trim()||'MANUAL',
+      is_manual_invoice: document.getElementById('manual_'+i).checked,
+      invoice_date:      document.getElementById('idate_'+i).value||null,
+      product_name:      pname,
+      product_code:      document.getElementById('pcode_'+i).value.trim(),
+      batch_no:          '',
+      quantity:          qty,
+      purchase_price:    String(purchprice),
+      invoice_rate:      String(sdprice),
+      claim_rate:        String(sprice),
+      difference_amt:    String(diffAmt.toFixed(2)),
+      billed_to:         document.getElementById('billedto_'+i).value.trim(),
+      billed_date:       document.getElementById('billeddate_'+i).value||null,
+      dealer_invoice_no: document.getElementById('dinv_'+i).value.trim(),
+      credit_note_type:  document.getElementById('cntype_'+i).value||'CR1',
+      total_claim_amt:   String(diffAmt.toFixed(2)),
+    });
+  }
+  return items;
+}
+
+// ── Save Draft ────────────────────────────────────────────────
+async function saveDraft(){
+  var items = collectItems();
+  var payload = {
+    dealer_name:   document.getElementById('dealer-name').value.trim()||'Unknown',
+    dealer_code:   document.getElementById('dealer-code').value.trim(),
+    region:        document.getElementById('region').value.trim(),
+    state:         document.getElementById('state').value.trim(),
+    sales_person:  document.getElementById('sales-person').value.trim(),
+    claim_type:    document.getElementById('claim-type').value,
+    claim_month:   document.getElementById('claim-month').value.trim(),
+    claim_year:    document.getElementById('claim-year').value.trim(),
+    items:         items,
+  };
+  try{
+    if(!claimId){
+      // Create new draft claim
+      var data = await api('/pdcn/claims', {method:'POST', body:JSON.stringify(payload)});
+      claimId = data.id;
+    } else {
+      // Update existing draft items
+      if(items.length > 0){
+        await api('/pdcn/claims/'+claimId+'/items', {method:'POST', body:JSON.stringify(items)});
+      }
+    }
+    showToast('Draft saved','success');
+    return true;
+  }catch(e){
+    var msg = (e && typeof e === 'object' && e.message) ? e.message : String(e);
+    showGlobalMsg(msg,'error');
+    return false;
+  }
+}
+
+// ── Submit ────────────────────────────────────────────────────
+async function submitClaim(){
+  var btn = document.getElementById('submit-btn');
+  setLoading(btn,true);
+  hideGlobalMsg();
+  try{
+    // 1. Save draft
+    var saved = await saveDraft();
+    if(!saved){ setLoading(btn,false); return; }
+
+    // 2. Upload attachments
+    var allDocs = [...finDocs, ...cnDocs];
+    for(var i=0;i<allDocs.length;i++){
+      var fd=new FormData(); fd.append('file',allDocs[i]);
+      await fetch('/api/v1/pdcn/claims/'+claimId+'/attachments',{
+        method:'POST',headers:{'Authorization':'Bearer '+Auth.getAccess()},body:fd
+      });
+    }
+
+    // 3. Submit
+    await api('/pdcn/claims/'+claimId+'/submit', {method:'POST'});
+    showToast('Claim submitted successfully!','success');
+    setTimeout(function(){ window.location.href='/templates/pdcn-dashboard.html'; }, 1200);
+  }catch(e){
+    showGlobalMsg(e.message,'error');
+  }
+  setLoading(btn,false);
+}
+
+function showGlobalMsg(msg, type){
+  var el = document.getElementById('global-error');
+  // Handle Error objects, plain strings, anything
+  var text = (msg && typeof msg === 'object') ? (msg.message || JSON.stringify(msg)) : String(msg||'Unknown error');
+  el.textContent = text;
+  el.style.display='block';
+  el.style.background = type==='error' ? 'var(--red-l)' : '#f0fdf4';
+  el.style.color = type==='error' ? 'var(--red)' : 'var(--green)';
+  el.style.borderColor = type==='error' ? 'var(--red-t)' : 'var(--green-t)';
+}
+function hideGlobalMsg(){ document.getElementById('global-error').style.display='none'; }
+</script>
+</body>
+</html>

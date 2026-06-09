@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Platform Admin – PDCN CRM</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/static/css/dashboard.css"/>
+<script src="/static/js/app.js"></script>
+<style>
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+.kpi-card{border-radius:14px;padding:22px;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s;box-shadow:var(--sh1)}
+.kpi-card:hover{transform:translateY(-3px);box-shadow:var(--sh2)}
+.kpi-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--gold)}
+.kpi-num{font-family:'Outfit',serif;font-size:2.4rem;font-weight:600;color:var(--gold));line-height:1;margin-bottom:6px}
+.kpi-lbl{font-size:12px;color:var(--ink2);font-weight:500}
+.kpi-icon{position:absolute;top:18px;right:18px;font-size:22px;opacity:.4}
+.kpi-trend{font-size:11px;margin-top:6px}
+.trend-up{color:#10b981}.trend-dn{color:#ef4444}
+
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.section-title{font-family:'Outfit',serif;font-size:1.15rem;font-weight:600;color:var(--text)}
+.section-link{font-size:12px;color:var(--gold);text-decoration:none;font-weight:500}
+.section-link:hover{opacity:.75}
+
+.tenant-row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid rgba(30,30,50,.5)}
+.tenant-row:last-child{border-bottom:none}
+.tenant-avatar{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#111;flex-shrink:0}
+.tenant-name{font-size:13px;font-weight:600}
+.tenant-meta{font-size:11px;color:var(--ink2);margin-top:2px}
+.tenant-plan{margin-left:auto;font-size:11px;padding:3px 8px;border-radius:5px;background:rgba(200,146,42,.1);color:var(--gold-light);border:1px solid rgba(200,146,42,.2);font-weight:600;white-space:nowrap}
+
+.log-row{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid rgba(30,30,50,.4)}
+.log-row:last-child{border-bottom:none}
+.log-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:5px}
+.log-action{font-size:12px;font-weight:500}
+.log-meta{font-size:11px;color:var(--ink2);margin-top:2px}
+
+.quick-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+.qa{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--primary-bg);border:1px solid var(--border);border-radius:10px;text-decoration:none;color:var(--ink);transition:all .2s;font-size:13px;font-weight:500}
+.qa:hover{border-color:rgba(200,146,42,.3);background:rgba(200,146,42,.04)}
+.qa-icon{width:32px;height:32px;border-radius:8px;background:rgba(200,146,42,.1);border:1px solid rgba(200,146,42,.2);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+
+.rev-bars{display:flex;align-items:flex-end;gap:8px;height:100px;margin-top:12px}
+.rev-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.rev-bar{width:100%;border-radius:4px 4px 0 0;background:linear-gradient(180deg,rgba(200,146,42,.8),rgba(200,146,42,.2));transition:height .8s cubic-bezier(.34,1.56,.64,1)}
+.rev-bar-lbl{font-size:10px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="icon">T</div>
+    <div>
+      <div class="name">PDCN <span>CRM</span></div>
+      <div class="badge">Platform Admin</div>
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Platform</div>
+    <a class="nav-item active" href="/templates/admin-dashboard.html"><span class="nav-icon">◈</span>Dashboard</a>
+    <a class="nav-item" href="/templates/admin-tenants.html"><span class="nav-icon">◉</span>Tenants</a>
+    <a class="nav-item" href="/templates/admin-users.html"><span class="nav-icon">◎</span>All Users</a>
+    <a class="nav-item" href="/templates/admin-pricing.html"><span class="nav-icon">💰</span>Pricing Plans</a>
+    <a class="nav-item" href="/templates/admin-videos.html"><span class="nav-icon">🎬</span>Knowledge Videos</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">System</div>
+    <a class="nav-item" href="/templates/admin-logs.html"><span class="nav-icon">◌</span>Audit Logs</a>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar" id="sa-avatar">SA</div>
+      <div class="user-info"><div class="user-name" id="sa-name">Super Admin</div><div class="user-role">Platform Owner</div></div>
+      <button class="logout-btn" onclick="logout()">⏻</button>
+    </div>
+  </div>
+</aside>
+
+<div class="main-content">
+  <div class="topbar">
+    <span class="topbar-title">Platform Overview</span>
+    <div style="font-size:12px;color:var(--muted)" id="topbar-date"></div>
+  </div>
+  <div class="page-content">
+
+    <!-- KPIs -->
+    <div class="kpi-grid">
+      <div class="kpi-card" style="grid-template-columns:1.4fr 1fr;gap:20px;margin-bottom:20px">
+      <!-- Recent Tenants -->
+      <div class="table-card" style="padding:24px">
+        <div class="section-head">
+          <div class="section-title">Recent Organisations</div>
+          <a class="section-link" href="/templates/admin-tenants.html">View all →</a>
+        </div>
+        <div id="tenants-list"><div style="color:var(--ink2);font-size:13px;padding:20px 0;text-align:center">Loading…</div></div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="table-card" style="padding:24px">
+        <div class="section-head"><div class="section-title">Quick Actions</div></div>
+        <div class="quick-actions">
+          <a class="qa" href="/templates/admin-tenants.html"><div class="qa-icon">🏢</div>Add Organisation</a>
+          <a class="qa" href="/templates/admin-users.html"><div class="qa-icon">👤</div>Manage Users</a>
+          <a class="qa" href="/templates/admin-pricing.html"><div class="qa-icon">💰</div>Edit Pricing</a>
+          <a class="qa" href="/templates/admin-videos.html"><div class="qa-icon">🎬</div>Upload Video</a>
+          <a class="qa" href="/templates/admin-logs.html"><div class="qa-icon">📋</div>Audit Logs</a>
+          <a class="qa" href="/templates/admin-pricing.html"><div class="qa-icon">📊</div>Subscriptions</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 2 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <!-- Plan distribution -->
+      <div class="table-card" style="padding:24px">
+        <div class="section-head"><div class="section-title">Plan Distribution</div><a class="section-link" href="/templates/admin-pricing.html">Manage →</a></div>
+        <div id="plan-dist"><div style="color:var(--ink2);font-size:13px;padding:20px 0;text-align:center">Loading…</div></div>
+      </div>
+
+      <!-- Recent Logs -->
+      <div class="table-card" style="padding:24px">
+        <div class="section-head"><div class="section-title">Recent Activity</div><a class="section-link" href="/templates/admin-logs.html">View all →</a></div>
+        <div id="logs-list"><div style="color:var(--ink2);font-size:13px;padding:20px 0;text-align:center">Loading…</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!requireAuth()) return;
+  const user = Auth.getUser();
+  if (!user || user.role !== 'super_admin') { window.location.href='/templates/login.html'; return; }
+  document.getElementById('sa-name').textContent = user.full_name || 'Super Admin';
+  document.getElementById('sa-avatar').textContent = (user.full_name||'SA').slice(0,2).toUpperCase();
+  document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+  // Load tenants
+  try {
+    const res = await api.get('/admin/tenants?per_page=5');
+    document.getElementById('k-tenants').textContent = res.total || 0;
+    document.getElementById('k-active').textContent = (res.tenants||[]).filter(t=>t.status==='active').length;
+    const list = document.getElementById('tenants-list');
+    if (!res.tenants?.length) {
+      list.innerHTML = '<div style="color:var(--ink2);font-size:13px;text-align:center;padding:20px">No organisations yet. <a href="/templates/admin-tenants.html" style="color:var(--gold)">Create first →</a></div>';
+    } else {
+      list.innerHTML = res.tenants.map(t => {
+        const init = (t.company_name||'?').slice(0,2).toUpperCase();
+        return `<div class="tenant-row">
+          <div class="tenant-avatar">${init}</div>
+          <div><div class="tenant-name">${t.company_name}</div><div class="tenant-meta">${t.admin_email||'—'} · ${t.user_count||0} users</div></div>
+          <div class="tenant-plan">${t.plan_name||'No plan'}</div>
+        </div>`;
+      }).join('');
+    }
+    // Total users
+    document.getElementById('k-users').textContent = res.tenants.reduce((s,t)=>s+(t.user_count||0),0);
+  } catch(e) {}
+
+  // Subscriptions / plan distribution
+  try {
+    const subs = await api.get('/pricing/subscriptions');
+    const planCounts = {};
+    subs.forEach(s => { planCounts[s.plan_name] = (planCounts[s.plan_name]||0)+1; });
+    const colors = {'Starter':'var(--gold)','Professional':'#6366f1','Enterprise':'#10b981'};
+    const dist = document.getElementById('plan-dist');
+    if (!Object.keys(planCounts).length) {
+      dist.innerHTML = '<div style="color:var(--ink2);font-size:13px;text-align:center;padding:20px">No subscriptions yet</div>';
+    } else {
+      const total = subs.length;
+      dist.innerHTML = Object.entries(planCounts).map(([name,count]) => {
+        const pct = Math.round(count/total*100);
+        const color = colors[name]||'#6366f1';
+        return `<div style="margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span style="font-size:13px;font-weight:600">${name}</span>
+            <span style="font-size:12px;color:var(--muted)">${count} org${count>1?'s':''} · ${pct}%</span>
+          </div>
+          <div style="height:6px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:${color};border-radius:3px;transition:width .8s"></div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  } catch(e) {}
+
+  // Logs
+  try {
+    const logs = await api.get('/admin/logs/activity?per_page=6');
+    document.getElementById('k-logs').textContent = logs.total || 0;
+    const ll = document.getElementById('logs-list');
+    if (!logs.logs?.length) { ll.innerHTML='<div style="color:var(--ink2);font-size:13px;text-align:center;padding:20px">No activity yet</div>'; }
+    else {
+      ll.innerHTML = logs.logs.map(l=>`<div class="log-row">
+        <div class="log-dot"></div>
+        <div><div class="log-action">${(l.action||'').replace(/_/g,' ')}</div>
+        <div class="log-meta">${l.user_name||'System'} · ${formatDateTime(l.created_at)}</div></div>
+      </div>`).join('');
+    }
+  } catch(e) {}
+});
+
+function logout() {
+  const r = Auth.getRefresh();
+  if (r) api.post('/auth/logout',{refresh_token:r}).catch(()=>{});
+  Auth.clear(); window.location.href='/templates/login.html';
+}
+</script>
+</body>
+</html>

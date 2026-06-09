@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Authenticating – PDCN CRM</title>
+
+<script src="/static/js/app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background:var(--primary-bg); color:var(--ink); font-family:'Nunito',sans-serif; min-height:100vh; display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px; }
+.spinner { width:48px;height:48px;border:3px solid rgba(99,102,241,0.2);border-top-color:var(--blue);border-radius:50%;animation:spin 0.8s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+p { color:var(--ink2);font-size:14px; }
+</style>
+</head>
+<body>
+<div class="spinner"></div>
+<p>Completing sign-in, please wait…</p>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  const params = new URLSearchParams(window.location.search);
+  const access = params.get('access_token');
+  const refresh = params.get('refresh_token');
+
+  if (!access || !refresh) {
+    window.location.href = '/templates/login.html';
+    return;
+  }
+
+  // Fetch user info
+  try {
+    const res = await fetch('http://localhost:8000/api/v1/auth/me', {
+      headers: { 'Authorization': `Bearer ${access}` }
+    });
+    if (!res.ok) throw new Error('Failed');
+    const user = await res.json();
+    Auth.save({ access_token: access, refresh_token: refresh, user });
+    if (user.role === 'super_admin') window.location.href = '/templates/admin-dashboard.html';
+    else if (user.role === 'tenant_admin') window.location.href = '/templates/tenant-dashboard.html';
+    else window.location.href = '/templates/pdcn-dashboard.html';
+  } catch {
+    window.location.href = '/templates/login.html';
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Pricing Management – CRM Admin</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/static/css/dashboard.css"/>
+<script src="/static/js/app.js"></script>
+<style>
+.plan-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px;margin-bottom:32px}
+.plan-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;position:relative;transition:border-color .2s}
+.plan-card.featured{border-color:var(--primary);box-shadow:0 0 0 1px rgba(201,151,58,.2)}
+.plan-card.inactive{opacity:.55}
+.plan-badge{position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#C9973A,#E8B96A);color:#fff;font-size:10px;font-weight:700;padding:3px 14px;border-radius:20px;white-space:nowrap}
+.plan-name{font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:700;margin-bottom:6px}
+.plan-price{font-size:28px;font-weight:800;font-family:'Plus Jakarta Sans',sans-serif;color:var(--primary)}
+.plan-price span{font-size:13px;font-weight:400;color:var(--muted)}
+.plan-limits{display:flex;gap:12px;flex-wrap:wrap;margin:14px 0;padding:12px;background:rgba(201,151,58,.05);border-radius:8px;border:1px solid rgba(201,151,58,.15)}
+.plan-limit{font-size:12px;color:var(--muted)}<span style="font-weight:600;color:var(--text)">
+.plan-features{list-style:none;display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+.plan-features li{font-size:13px;color:var(--ink2);display:flex;align-items:center;gap:6px}
+.plan-features li::before{content:'✓';color:#C9973A;font-weight:700;flex-shrink:0}
+.plan-actions{display:flex;gap:8px}
+.btn-edit{flex:1;padding:8px;border-radius:7px;border:1px solid rgba(201,151,58,.3);background:rgba(201,151,58,.08);color:#E8B96A;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-edit:hover{background:rgba(201,151,58,.2)}
+.btn-toggle{padding:8px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:none}
+
+.subs-table{width:100%;border-collapse:collapse}
+.subs-table th{padding:10px 14px;font-size:11px;font-weight:600;color:var(--ink2);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);text-align:left}
+.subs-table td{padding:11px 14px;font-size:13px;border-bottom:1px solid var(--border)}
+.usage-bar{height:6px;background:var(--blue-pale);border-radius:3px;margin-top:4px;overflow:hidden;width:120px}
+.usage-fill{height:100%;background:#6366f1;border-radius:3px;transition:width .5s}
+.usage-fill.warn{background:#f59e0b}
+.usage-fill.over{background:#ef4444}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.4);backdrop-filter:blur(6px);z-index:1000;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;width:580px;max-width:95vw;max-height:88vh;overflow-y:auto}
+.modal h3{font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;margin-bottom:20px}
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em}
+.form-input,.form-select{width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--primary-bg);color:var(--ink);font-size:14px;font-family:'Nunito',sans-serif;box-sizing:border-box}
+.form-input:focus,.form-select:focus{outline:none;border-color:#C9973A}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn{padding:10px 22px;border-radius:8px;font-size:14px;font-weight:600;border:none;cursor:pointer;transition:all .2s}
+.btn-gold{background:linear-gradient(135deg,#C9973A,#E8B96A);color:#fff}
+.btn-gold:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(201,151,58,.4)}
+.btn-ghost{background:var(--primary-bg);color:var(--ink2);border:1px solid var(--border)}
+.features-editor{border:1px solid var(--border);border-radius:8px;padding:12px;min-height:100px;display:flex;flex-direction:column;gap:6px}
+.feat-item{display:flex;gap:8px;align-items:center}
+.feat-item input{flex:1;padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--primary-bg);color:var(--ink);font-size:13px;font-family:'Nunito',sans-serif}
+.feat-item input:focus{outline:none;border-color:#C9973A}
+.feat-rm{background:none;border:none;color:#ef4444;cursor:pointer;font-size:16px}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo"><div class="icon">⚡</div><div><div class="name">CRM<span style="color:#C9973A">Admin</span></div></div></div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Platform</div>
+    <a class="nav-item" href="/templates/admin-dashboard.html"><span class="nav-icon">◈</span>Dashboard</a>
+    <a class="nav-item" href="/templates/admin-tenants.html"><span class="nav-icon">◉</span>Tenants</a>
+    <a class="nav-item" href="/templates/admin-users.html"><span class="nav-icon">◎</span>All Users</a>
+    <a class="nav-item active" href="/templates/admin-pricing.html"><span class="nav-icon">💰</span>Pricing Plans</a>
+    <a class="nav-item" href="/templates/admin-logs.html"><span class="nav-icon">◈</span>Audit Logs</a>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar" id="sa-avatar">SA</div>
+      <div class="user-info"><div class="user-name" id="sa-name">Super Admin</div><div class="user-role">Platform Owner</div></div>
+      <button class="logout-btn" id="logout-btn">⏻</button>
+    </div>
+  </div>
+</aside>
+
+<div class="main-content">
+  <div class="topbar">
+    <span class="topbar-title">💰 Pricing Plans</span>
+    <button class="btn btn-gold" onclick="openCreate()" style="font-size:13px;padding:8px 20px">+ New Plan</button>
+  </div>
+  <div class="page-content">
+
+    <!-- Plans Grid -->
+    <div style="margin-bottom:8px">
+      <h2 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:700;margin-bottom:4px">Active Plans</h2>
+      <p style="font-size:13px;color:var(--muted)">Changes are reflected live on the public pricing page.</p>
+    </div>
+    <div class="plan-cards" id="plan-cards">
+      <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted)">Loading plans…</div>
+    </div>
+
+    <!-- Subscriptions Table -->
+    <div class="table-card" style="padding:0">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+        <h3 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:700">Tenant Subscriptions</h3>
+        <button class="btn btn-ghost" style="font-size:12px;padding:7px 16px" onclick="loadSubs()">↻ Refresh</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="subs-table">
+          <thead><tr><th>Tenant</th><th>Plan</th><th>Billing</th><th>Claims Usage</th><th>Expires</th><th>Action</th></tr></thead>
+          <tbody id="subs-tbody"><tr><td colspan="6" style="text-align:center;padding:30px;color:var(--muted)">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Plan Edit Modal -->
+<div class="modal-overlay" id="plan-modal">
+  <div class="modal">
+    <h3 id="modal-title">Edit Plan</h3>
+    <input type="hidden" id="edit-plan-id"/>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Plan Name *</label>
+        <input class="form-input" id="p-name" placeholder="e.g. Professional"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Slug *</label>
+        <input class="form-input" id="p-slug" placeholder="e.g. professional"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Description</label>
+      <input class="form-input" id="p-desc" placeholder="Short description of the plan"/>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Monthly Price (₹, ex-GST)</label>
+        <input class="form-input" id="p-monthly" type="number" min="0" placeholder="0"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Annual Price (₹, ex-GST)</label>
+        <input class="form-input" id="p-annual" type="number" min="0" placeholder="0"/>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Annual Discount %</label>
+        <input class="form-input" id="p-discount" type="number" min="0" max="100" placeholder="20" oninput="calcAnnualSavings()"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Sort Order</label>
+        <input class="form-input" id="p-sort" type="number" min="0" value="1"/>
+      </div>
+    </div>
+    <div id="annual-savings-hint" style="font-size:12px;color:#C9973A;margin:-8px 0 12px;display:none"></div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Max Users (blank = unlimited)</label>
+        <input class="form-input" id="p-users" type="number" min="1" placeholder="Leave blank for unlimited"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Max Claims/Month (blank = unlimited)</label>
+        <input class="form-input" id="p-claims" type="number" min="1" placeholder="Leave blank for unlimited"/>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Storage (GB)</label>
+        <input class="form-input" id="p-storage" type="number" min="1" value="5"/>
+      </div>
+      <div class="form-group" style="display:flex;gap:16px;align-items:flex-end;padding-bottom:2px">
+        <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink2);cursor:pointer">
+          <input type="checkbox" id="p-featured" style="width:15px;height:15px;accent-color:#C9973A"/> Featured
+        </label>
+        <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink2);cursor:pointer">
+          <input type="checkbox" id="p-active" checked style="width:15px;height:15px;accent-color:#C9973A"/> Active
+        </label>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Features</label>
+      <div class="features-editor" id="features-editor"></div>
+      <button onclick="addFeature()" style="margin-top:8px;background:rgba(201,151,58,.1);border:1px solid rgba(201,151,58,.2);color:#C9973A;padding:5px 14px;border-radius:6px;font-size:12px;cursor:pointer">+ Add Feature</button>
+    </div>
+    <div id="modal-error" style="color:#ef4444;font-size:13px;margin-bottom:10px;display:none"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal('plan-modal')">Cancel</button>
+      <button class="btn btn-gold" id="save-plan-btn" onclick="savePlan()">Save Plan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Assign Plan Modal -->
+<div class="modal-overlay" id="assign-modal">
+  <div class="modal" style="max-width:400px">
+    <h3>Assign Plan to Tenant</h3>
+    <input type="hidden" id="assign-tenant-id"/>
+    <div class="form-group">
+      <label class="form-label">Tenant</label>
+      <input class="form-input" id="assign-tenant-name" readonly style="opacity:.7"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Select Plan</label>
+      <select class="form-select form-input" id="assign-plan-id"></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Billing Cycle</label>
+      <select class="form-select form-input" id="assign-billing">
+        <option value="monthly">Monthly</option>
+        <option value="annual">Annual</option>
+      </select>
+    </div>
+    <div id="assign-error" style="color:#ef4444;font-size:13px;margin-bottom:10px;display:none"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
+      <button class="btn btn-ghost" onclick="closeModal('assign-modal')">Cancel</button>
+      <button class="btn btn-gold" onclick="confirmAssign()">Assign Plan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var allPlans = [];
+
+document.addEventListener('DOMContentLoaded', function(){
+  if(!requireAuth()) return;
+  var u = Auth.getUser();
+  if(!u || u.role !== 'super_admin'){ window.location.href='/templates/login.html'; return; }
+  var init = (u.full_name||'SA').slice(0,2).toUpperCase();
+  document.getElementById('sa-avatar').textContent = init;
+  document.getElementById('sa-name').textContent = u.full_name || 'Super Admin';
+  document.getElementById('logout-btn').onclick = logout;
+  loadPlans();
+  loadSubs();
+});
+
+async function loadPlans(){
+  try{
+    allPlans = await api('/pricing/plans');
+    renderPlans();
+  }catch(e){ showToast(e.message,'error'); }
+}
+
+function renderPlans(){
+  var grid = document.getElementById('plan-cards');
+  if(!allPlans.length){ grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted)">No plans yet. Click + New Plan to create one.</div>'; return; }
+  grid.innerHTML = allPlans.map(function(p){
+    var monthlyEquiv = p.annual_price ? '₹'+Math.round(p.annual_price/12)+'/mo if annual' : '';
+    return '<div class="plan-card '+(p.is_featured?'featured':'')+(p.is_active?'':' inactive')+'">'
+      +(p.is_featured?'<div class="plan-badge">⭐ Most Popular</div>':'')
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">'
+        +'<div class="plan-name">'+p.name+'</div>'
+        +'<span style="font-size:11px;padding:2px 8px;border-radius:4px;background:'+(p.is_active?'rgba(16,185,129,.15)':'rgba(107,114,128,.15)')+';color:'+(p.is_active?'#6ee7b7':'#9ca3af')+'">'+(p.is_active?'Active':'Inactive')+'</span>'
+      +'</div>'
+      +'<div class="plan-price">₹'+(p.monthly_price||'Custom')+(p.monthly_price?'<span>/month ex-GST</span>':'<span>— contact us</span>')+'</div>'
+      +(monthlyEquiv?'<div style="font-size:11px;color:#C9973A;margin-top:2px">'+monthlyEquiv+'</div>':'')
+      +'<div class="plan-limits">'
+        +'<span class="plan-limit">👥 '+(p.max_users||'Unlimited')+' users</span>'
+        +'<span class="plan-limit">📄 '+(p.max_claims_per_month||'Unlimited')+' CN/mo</span>'
+        +'<span class="plan-limit">💾 '+p.max_storage_gb+'GB</span>'
+        +'<span class="plan-limit">🏷️ '+p.annual_discount_pct+'% annual</span>'
+      +'</div>'
+      +'<ul class="plan-features">'+(p.features||[]).slice(0,5).map(function(f){ return '<li>'+f+'</li>'; }).join('')+'</ul>'
+      +'<div class="plan-actions">'
+        +'<button class="btn-edit" onclick="openEdit(\''+p.id+'\')">✏ Edit</button>'
+        +'<button class="btn-toggle" style="background:'+(p.is_active?'rgba(239,68,68,.1)':'rgba(16,185,129,.1)')+';color:'+(p.is_active?'#fca5a5':'#6ee7b7')+'" onclick="togglePlan(\''+p.id+'\','+(!p.is_active)+')">'+(p.is_active?'Deactivate':'Activate')+'</button>'
+      +'</div>'
+    +'</div>';
+  }).join('');
+}
+
+async function loadSubs(){
+  try{
+    var subs = await api('/pricing/subscriptions');
+    var tbody = document.getElementById('subs-tbody');
+    if(!subs.length){ tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--muted)">No subscriptions yet.</td></tr>'; return; }
+    tbody.innerHTML = subs.map(function(s){
+      var usePct = s.max_claims ? Math.min(100,Math.round(s.claims_used/s.max_claims*100)) : 0;
+      var barCls = usePct>=100?'over':usePct>=80?'warn':'';
+      return '<tr>'
+        +'<td style="font-weight:600">'+s.tenant_name+'</td>'
+        +'<td><span style="background:rgba(201,151,58,.12);color:#C9973A;padding:3px 8px;border-radius:5px;font-size:12px;font-weight:600">'+s.plan_name+'</span></td>'
+        +'<td style="font-size:12px;color:var(--muted)">'+(s.billing_cycle==='annual'?'📅 Annual':'🔄 Monthly')+'</td>'
+        +'<td>'
+          +'<div style="font-size:12px">'+(s.max_claims?s.claims_used+' / '+s.max_claims:'Unlimited')+'</div>'
+          +(s.max_claims?'<div class="usage-bar"><div class="usage-fill '+barCls+'" style="width:'+usePct+'%"></div></div>':'')
+        +'</td>'
+        +'<td style="font-size:12px;color:var(--muted)">'+(s.expires_at?new Date(s.expires_at).toLocaleDateString('en-IN'):'—')+'</td>'
+        +'<td><button onclick="openAssign(\''+s.tenant_id+'\',\''+s.tenant_name+'\')" style="background:var(--blue-pale);color:var(--primary);border:1px solid var(--blue-border);padding:5px 12px;border-radius:6px;font-size:12px;cursor:pointer">Change Plan</button></td>'
+      +'</tr>';
+    }).join('');
+  }catch(e){ showToast(e.message,'error'); }
+}
+
+function openCreate(){
+  document.getElementById('modal-title').textContent = 'Create New Plan';
+  document.getElementById('edit-plan-id').value = '';
+  ['p-name','p-slug','p-desc','p-monthly','p-annual','p-discount','p-users','p-claims'].forEach(function(id){ document.getElementById(id).value=''; });
+  document.getElementById('p-storage').value = '5';
+  document.getElementById('p-sort').value = '1';
+  document.getElementById('p-featured').checked = false;
+  document.getElementById('p-active').checked = true;
+  document.getElementById('features-editor').innerHTML = '';
+  document.getElementById('modal-error').style.display = 'none';
+  addFeature(); addFeature(); addFeature();
+  openModal('plan-modal');
+}
+
+function openEdit(id){
+  var p = allPlans.find(function(x){ return x.id===id; });
+  if(!p) return;
+  document.getElementById('modal-title').textContent = 'Edit Plan: '+p.name;
+  document.getElementById('edit-plan-id').value = id;
+  document.getElementById('p-name').value = p.name;
+  document.getElementById('p-slug').value = p.slug;
+  document.getElementById('p-desc').value = p.description||'';
+  document.getElementById('p-monthly').value = p.monthly_price||'';
+  document.getElementById('p-annual').value = p.annual_price||'';
+  document.getElementById('p-discount').value = p.annual_discount_pct||0;
+  document.getElementById('p-users').value = p.max_users||'';
+  document.getElementById('p-claims').value = p.max_claims_per_month||'';
+  document.getElementById('p-storage').value = p.max_storage_gb||5;
+  document.getElementById('p-sort').value = p.sort_order||1;
+  document.getElementById('p-featured').checked = p.is_featured;
+  document.getElementById('p-active').checked = p.is_active;
+  document.getElementById('modal-error').style.display='none';
+  // Render features
+  var ed = document.getElementById('features-editor');
+  ed.innerHTML = '';
+  (p.features||[]).forEach(function(f){ addFeature(f); });
+  if(!p.features||!p.features.length){ addFeature(); }
+  calcAnnualSavings();
+  openModal('plan-modal');
+}
+
+function addFeature(val){
+  var ed = document.getElementById('features-editor');
+  var row = document.createElement('div');
+  row.className = 'feat-item';
+  row.innerHTML = '<input type="text" placeholder="Feature description…" value="'+(val||'')+'"/><button class="feat-rm" onclick="this.parentElement.remove()">✕</button>';
+  ed.appendChild(row);
+}
+
+function calcAnnualSavings(){
+  var monthly = parseInt(document.getElementById('p-monthly').value)||0;
+  var disc = parseInt(document.getElementById('p-discount').value)||0;
+  var hint = document.getElementById('annual-savings-hint');
+  if(monthly&&disc){
+    var annualFull = monthly*12;
+    var annualDiscounted = Math.round(annualFull*(1-disc/100));
+    document.getElementById('p-annual').value = annualDiscounted;
+    var saving = annualFull - annualDiscounted;
+    hint.textContent = '→ Annual price auto-calculated: ₹'+annualDiscounted+' (saving ₹'+saving+')';
+    hint.style.display='block';
+  } else {
+    hint.style.display='none';
+  }
+}
+
+function getFeatures(){
+  return Array.from(document.querySelectorAll('#features-editor input'))
+    .map(function(i){ return i.value.trim(); })
+    .filter(function(v){ return v; });
+}
+
+async function savePlan(){
+  var btn = document.getElementById('save-plan-btn');
+  var errEl = document.getElementById('modal-error');
+  errEl.style.display='none';
+  var id = document.getElementById('edit-plan-id').value;
+  var payload = {
+    name: document.getElementById('p-name').value.trim(),
+    slug: document.getElementById('p-slug').value.trim().toLowerCase().replace(/\s+/g,'-'),
+    description: document.getElementById('p-desc').value.trim(),
+    monthly_price: parseInt(document.getElementById('p-monthly').value)||0,
+    annual_price: parseInt(document.getElementById('p-annual').value)||0,
+    annual_discount_pct: parseInt(document.getElementById('p-discount').value)||0,
+    max_users: document.getElementById('p-users').value ? parseInt(document.getElementById('p-users').value) : null,
+    max_claims_per_month: document.getElementById('p-claims').value ? parseInt(document.getElementById('p-claims').value) : null,
+    max_storage_gb: parseInt(document.getElementById('p-storage').value)||5,
+    is_active: document.getElementById('p-active').checked,
+    is_featured: document.getElementById('p-featured').checked,
+    sort_order: parseInt(document.getElementById('p-sort').value)||1,
+    features: getFeatures(),
+  };
+  if(!payload.name){ errEl.textContent='Plan name is required.'; errEl.style.display='block'; return; }
+  if(!payload.slug){ errEl.textContent='Slug is required.'; errEl.style.display='block'; return; }
+  btn.disabled=true; btn.textContent='Saving…';
+  try{
+    if(id){ await api('/pricing/plans/'+id, {method:'PATCH', body:JSON.stringify(payload)}); }
+    else   { await api('/pricing/plans',     {method:'POST',  body:JSON.stringify(payload)}); }
+    showToast('Plan saved!','success');
+    closeModal('plan-modal');
+    loadPlans();
+  }catch(e){ errEl.textContent=e.message; errEl.style.display='block'; }
+  btn.disabled=false; btn.textContent='Save Plan';
+}
+
+async function togglePlan(id, newActive){
+  var p = allPlans.find(function(x){ return x.id===id; });
+  if(!p) return;
+  try{
+    await api('/pricing/plans/'+id, {method:'PATCH', body:JSON.stringify(Object.assign({},p,{is_active:newActive,features:p.features||[]}))});
+    showToast(newActive?'Plan activated':'Plan deactivated', 'success');
+    loadPlans();
+  }catch(e){ showToast(e.message,'error'); }
+}
+
+function openAssign(tenantId, tenantName){
+  document.getElementById('assign-tenant-id').value = tenantId;
+  document.getElementById('assign-tenant-name').value = tenantName;
+  document.getElementById('assign-error').style.display='none';
+  var sel = document.getElementById('assign-plan-id');
+  sel.innerHTML = allPlans.filter(function(p){ return p.is_active; }).map(function(p){
+    return '<option value="'+p.id+'">'+p.name+' — ₹'+p.monthly_price+'/mo</option>';
+  }).join('');
+  openModal('assign-modal');
+}
+
+async function confirmAssign(){
+  var errEl = document.getElementById('assign-error');
+  errEl.style.display='none';
+  try{
+    await api('/pricing/subscriptions/assign', {method:'POST', body:JSON.stringify({
+      tenant_id: document.getElementById('assign-tenant-id').value,
+      plan_id: document.getElementById('assign-plan-id').value,
+      billing_cycle: document.getElementById('assign-billing').value,
+    })});
+    showToast('Plan assigned!','success');
+    closeModal('assign-modal');
+    loadSubs();
+  }catch(e){ errEl.textContent=e.message; errEl.style.display='block'; }
+}
+
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+</script>
+</body>
+</html>

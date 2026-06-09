@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>User Management – CRM</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/static/css/dashboard.css"/>
+<style>
+.role-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.role-option{position:relative;cursor:pointer}
+.role-option input[type=radio]{position:absolute;opacity:0;width:0;height:0}
+.role-card{border:2px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px;transition:all .18s;background:var(--primary-bg);cursor:pointer}
+.role-option input:checked + .role-card{border-color:var(--blue);background:var(--blue-pale)}
+.role-option.slot-taken .role-card{opacity:.45;cursor:not-allowed}
+.role-card-icon{font-size:20px;flex-shrink:0}
+.role-card-label{font-size:13px;font-weight:600;color:var(--ink);line-height:1.2}
+.role-card-sub{font-size:11px;color:var(--ink2);margin-top:2px}
+.role-taken-tag{display:inline-block;font-size:10px;font-weight:600;background:rgba(239,68,68,.12);color:#f87171;padding:2px 6px;border-radius:4px;margin-top:3px}
+.dual-panel{display:none;margin-top:12px;padding:14px 16px;border-radius:10px;border:1px dashed #6366f1;background:rgba(99,102,241,.05)}
+.dual-panel.show{display:block}
+.dual-title{font-size:13px;font-weight:600;color:var(--blue);margin-bottom:8px}
+.chk-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.chk-item{display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:500;color:var(--text)}
+.chk-item input{width:16px;height:16px;accent-color:var(--blue);cursor:pointer}
+.both-pill{display:none;font-size:11px;padding:2px 10px;border-radius:20px;background:rgba(99,102,241,.18);color:var(--primary);font-weight:600;margin-left:auto}
+.both-pill.show{display:inline-block}
+.slot-bar{display:flex;gap:8px;flex-wrap:wrap;padding:12px 20px;border-bottom:1px solid var(--border)}
+.slot-chip{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;border:1px solid var(--border);font-size:12px;font-weight:500;background:var(--cobalt-pale)}
+.sdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.sdot-free{background:#10b981}.sdot-taken{background:#ef4444}
+#dealer-fields{animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+input[name="credit-check"]:checked + span{font-weight:800}
+label:has(#u-cc-green input:checked){border-color:var(--green)!important;background:var(--green-l)!important}
+label:has(#u-cc-red input:checked){border-color:var(--red)!important;background:var(--red-l)!important}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="icon">⚡</div>
+    <div><div class="name" id="t-company">PDCN CRM</div><div class="badge">PDCN CRM</div></div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Administration</div>
+    <a class="nav-item" href="/templates/tenant-dashboard.html"><span class="nav-icon">◈</span>Dashboard</a>
+    <a class="nav-item active" href="/templates/tenant-users.html"><span class="nav-icon">◎</span>User Management</a>
+    <a class="nav-item" href="/templates/tenant-profile.html"><span class="nav-icon">👤</span>My Profile</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">PDCN Workflow</div>
+    <a class="nav-item" href="/templates/pdcn-dashboard.html"><span class="nav-icon">📋</span>PDCN Dashboard</a>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar" id="t-avatar">TU</div>
+      <div class="user-info"><div class="user-name" id="t-name">User</div><div class="user-role" id="t-role">Member</div></div>
+      <button class="logout-btn" id="logout-btn">⏻</button>
+    </div>
+  </div>
+</aside>
+
+<div class="main-content">
+  <div class="topbar"><span class="topbar-title">User Management</span></div>
+  <div class="page-content">
+    <div class="page-header">
+      <h1>Users</h1>
+      <p>Manage your organisation's team members</p>
+    </div>
+    <div class="table-card">
+      <div class="table-header">
+        <h3>Team Members</h3>
+        <div class="table-actions">
+          <input class="search-input" id="search" placeholder="🔍 Search user…" oninput="debounceLoad()"/>
+          <select class="filter-select" id="role-filter" onchange="loadUsers()">
+            <option value="">All Roles</option>
+            <option value="tenant_admin">Tenant Admin</option>
+            <option value="cn_team">CN Team</option>
+            <option value="finance_team">Finance Team</option>
+            <option value="cfa_team">CFA Team</option>
+            <option value="finance_cfa_team">Finance + CFA</option>
+            <option value="dealer">Distributor</option>
+          </select>
+          <button class="btn btn-primary" id="add-user-btn">➕ Add User</button>
+        </div>
+      </div>
+      <div class="slot-bar" id="slot-bar">
+        <div class="slot-chip"><span class="sdot sdot-free"></span><span style="color:var(--tx-3)">Loading slots…</span></div>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>#</th><th>Name</th><th>Email / Distributor Info</th><th>Role</th><th>Status</th><th>Last Login</th><th>Actions</th></tr></thead>
+          <tbody id="user-tbody"><tr><td colspan="7" class="table-empty">Loading…</td></tr></tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <span id="page-info">—</span>
+        <div class="pagination-btns">
+          <button class="page-btn" id="prev-btn">← Prev</button>
+          <button class="page-btn" id="next-btn">Next →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CREATE MODAL -->
+<div class="modal-overlay" id="create-modal">
+  <div class="modal" style="max-width:680px;max-height:90vh;overflow-y:auto">
+    <h2 id="modal-heading">Add New User</h2>
+    <p style="color:var(--tx-3);font-size:13px;margin-bottom:20px">Create a new user account for your organisation</p>
+
+    <!-- Step 1: Role selection -->
+    <div class="form-group">
+      <label class="form-label">Role *</label>
+      <div class="role-options">
+        <label class="role-option" id="opt-cn_team">
+          <input type="radio" name="c-role" value="cn_team"/>
+          <div class="role-card"><span class="role-card-icon">🔗</span><div><div class="role-card-label">CN Team</div><div class="role-card-sub" id="sub-cn_team">1 slot</div></div></div>
+        </label>
+        <label class="role-option" id="opt-finance_team">
+          <input type="radio" name="c-role" value="finance_team"/>
+          <div class="role-card"><span class="role-card-icon">💰</span><div><div class="role-card-label">Finance Team</div><div class="role-card-sub" id="sub-finance_team">1 slot</div></div></div>
+        </label>
+        <label class="role-option" id="opt-cfa_team">
+          <input type="radio" name="c-role" value="cfa_team"/>
+          <div class="role-card"><span class="role-card-icon">📊</span><div><div class="role-card-label">CFA Team</div><div class="role-card-sub" id="sub-cfa_team">1 slot</div></div></div>
+        </label>
+        <label class="role-option" id="opt-dealer">
+          <input type="radio" name="c-role" value="dealer" checked/>
+          <div class="role-card"><span class="role-card-icon">🏢</span><div><div class="role-card-label">Distributor</div><div class="role-card-sub">Multiple allowed</div></div></div>
+        </label>
+      </div>
+    </div>
+
+    <!-- Dual-role panel -->
+    <div class="dual-panel" id="dual-panel">
+      <div class="dual-title">⚡ Combined Finance + CFA</div>
+      <div class="chk-row">
+        <label class="chk-item"><input type="checkbox" id="chk-finance"/> 💰 Finance</label>
+        <label class="chk-item"><input type="checkbox" id="chk-cfa"/> 📊 CFA</label>
+        <span class="both-pill" id="both-pill">Both Roles</span>
+      </div>
+      <div id="dual-warn" style="font-size:12px;color:#f87171;margin-top:6px;display:none"></div>
+    </div>
+
+    <!-- Basic account info -->
+    <div style="border-top:1px solid var(--border);margin:18px 0 14px;padding-top:16px">
+      <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;color:var(--tx-2);margin-bottom:14px">Account Information</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Full Name *</label>
+          <input class="form-input" id="c-name" placeholder="e.g. Rahul Sharma"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email Address *</label>
+          <input class="form-input" id="c-email" type="email" placeholder="rahul@company.com"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mobile</label>
+          <input class="form-input" id="c-mobile" placeholder="+91 98765 43210"/>
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label class="form-label">Password *</label>
+          <input class="form-input" id="c-password" type="password" placeholder="Min 8 chars, 1 uppercase, 1 number"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- Distributor details (shown only when Distributor role selected) -->
+    <div id="dealer-fields" style="display:none">
+      <div style="border-top:1px solid var(--border);margin-bottom:14px;padding-top:16px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+          <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;color:var(--primary)">🏢 Distributor Details</div>
+          <span style="font-size:11px;color:var(--tx-4);background:var(--surface-2);padding:2px 8px;border-radius:10px;border:1px solid var(--border)">All fields optional</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="form-group" style="grid-column:1/-1">
+            <label class="form-label">Distributor Name</label>
+            <input class="form-input" id="u-dist-name" placeholder="Official distributor/company name"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Distributor Code (SAP)</label>
+            <input class="form-input" id="u-sap-code" placeholder="e.g. 10023675"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">CN Series Code
+              <span style="font-size:10px;color:var(--tx-4);font-weight:400;margin-left:4px">Used in claim numbers</span>
+            </label>
+            <input class="form-input" id="u-series" placeholder="e.g. MAX, ABR, GUP (2-5 letters)" maxlength="5" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"/>
+            <div style="font-size:11px;color:var(--tx-4);margin-top:4px">Claim will be numbered: <strong id="series-preview" style="color:var(--primary)">MAX-SD-May-26-001</strong></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Business Group</label>
+            <input class="form-input" id="u-biz-group" placeholder="e.g. S.E.T, Recon"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Region</label>
+            <select class="form-input" id="u-region">
+              <option value="">Select Region</option>
+              <option>North</option><option>South</option>
+              <option>East</option><option>West</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">City</label>
+            <input class="form-input" id="u-city" placeholder="City"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">State</label>
+            <input class="form-input" id="u-state" placeholder="State"/>
+          </div>
+          <div class="form-group" style="grid-column:1/-1">
+            <label class="form-label">Sales Representative Name</label>
+            <input class="form-input" id="u-sales-rep" placeholder="Name of assigned sales representative"/>
+          </div>
+          <div class="form-group" style="grid-column:1/-1">
+            <label class="form-label">Credit Check</label>
+            <div style="display:flex;gap:10px;margin-top:4px">
+              <label style="display:flex;align-items:center;gap:7px;cursor:pointer;padding:8px 16px;border-radius:8px;border:1.5px solid var(--border);font-size:13px;font-weight:600;transition:all .15s" id="cc-green-lbl">
+                <input type="radio" name="credit-check" id="u-cc-green" value="Green" style="accent-color:var(--green)"/>
+                <span style="color:var(--green)">🟢 Green</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:7px;cursor:pointer;padding:8px 16px;border-radius:8px;border:1.5px solid var(--border);font-size:13px;font-weight:600;transition:all .15s" id="cc-red-lbl">
+                <input type="radio" name="credit-check" id="u-cc-red" value="Red" style="accent-color:var(--red)"/>
+                <span style="color:var(--red)">🔴 Red</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="create-error" style="color:var(--red);font-size:13px;margin-top:10px;padding:10px 14px;background:var(--red-l);border-radius:8px;border:1px solid var(--red-t);display:none"></div>
+    <div class="modal-footer" style="margin-top:20px">
+      <button class="btn btn-ghost" id="cancel-create-btn">Cancel</button>
+      <button class="btn btn-primary" id="create-btn">Create User</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESET PASSWORD MODAL -->
+<div class="modal-overlay" id="reset-modal">
+  <div class="modal">
+    <h2>Reset Password</h2>
+    <p>Set a new password for this user</p>
+    <div class="form-group">
+      <label class="form-label">New Password</label>
+      <input class="form-input" id="r-password" type="password" placeholder="New password"/>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="cancel-reset-btn">Cancel</button>
+      <button class="btn btn-primary" id="confirm-reset-btn">Reset Password</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE MODAL -->
+<div class="modal-overlay" id="delete-modal">
+  <div class="modal">
+    <h2>Delete User?</h2>
+    <p>The user will be soft-deleted and cannot log in. Activity history is retained.</p>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="cancel-delete-btn">Cancel</button>
+      <button class="btn btn-danger" id="confirm-delete-btn">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Self-contained API client (no dependency on app.js for core calls) ──────
+const TOKEN_KEY = 'access_token';
+const REFRESH_KEY = 'refresh_token';
+const USER_KEY = 'user';
+
+function getToken()   { return localStorage.getItem(TOKEN_KEY); }
+function getRefresh() { return localStorage.getItem(REFRESH_KEY); }
+function getUser()    { try { return JSON.parse(localStorage.getItem(USER_KEY)||'null'); } catch { return null; } }
+function saveAuth(d)  { localStorage.setItem(TOKEN_KEY,d.access_token); localStorage.setItem(REFRESH_KEY,d.refresh_token); localStorage.setItem(USER_KEY,JSON.stringify(d.user)); }
+function clearAuth()  { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(REFRESH_KEY); localStorage.removeItem(USER_KEY); }
+
+async function callAPI(path, opts) {
+  opts = opts || {};
+  const headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+  const tok = getToken();
+  if (tok) headers['Authorization'] = 'Bearer ' + tok;
+
+  let res = await fetch('/api/v1' + path, Object.assign({}, opts, { headers: headers }));
+
+  if (res.status === 401 && getRefresh()) {
+    const ref = await fetch('/api/v1/auth/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: getRefresh() })
+    });
+    if (ref.ok) {
+      const data = await ref.json();
+      saveAuth(data);
+      headers['Authorization'] = 'Bearer ' + data.access_token;
+      res = await fetch('/api/v1' + path, Object.assign({}, opts, { headers: headers }));
+    } else {
+      clearAuth();
+      window.location.href = '/templates/login.html';
+      return;
+    }
+  }
+
+  if (!res.ok) {
+    const err = await res.json().catch(function() { return { detail: res.statusText }; });
+    throw new Error(err.detail || 'Request failed');
+  }
+  return res.json();
+}
+
+function GET(path)         { return callAPI(path, { method: 'GET' }); }
+function POST(path, body)  { return callAPI(path, { method: 'POST',  body: JSON.stringify(body) }); }
+function PATCH(path, body) { return callAPI(path, { method: 'PATCH', body: JSON.stringify(body) }); }
+function DELETE(path)      { return callAPI(path, { method: 'DELETE' }); }
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+function toast(msg, type) {
+  type = type || 'success';
+  var colors = { success:'#10b981', error:'#ef4444', warning:'#f59e0b', info:'#6366f1' };
+  var icons  = { success:'✓', error:'✕', warning:'⚠', info:'ℹ' };
+  var wrap = document.getElementById('toast-wrap');
+  if (!wrap) {
+    wrap = document.createElement('div');
+    wrap.id = 'toast-wrap';
+    wrap.style.cssText = 'position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;';
+    document.body.appendChild(wrap);
+  }
+  var t = document.createElement('div');
+  t.style.cssText = 'background:var(--surface);color:var(--ink);padding:14px 20px;border-radius:10px;border-left:4px solid '+colors[type]+';box-shadow:0 8px 32px rgba(0,0,0,0.4);display:flex;align-items:center;gap:12px;min-width:260px;font-family:Nunito,sans-serif;font-size:14px;cursor:pointer;';
+  t.innerHTML = '<span style="color:'+colors[type]+';font-weight:700;font-size:16px">'+icons[type]+'</span><span>'+msg+'</span>';
+  t.onclick = function() { t.remove(); };
+  wrap.appendChild(t);
+  setTimeout(function() { t.remove(); }, 4000);
+}
+
+function setBtnLoading(btn, loading, original) {
+  if (loading) { btn.dataset.orig = btn.innerHTML; btn.innerHTML = 'Loading...'; btn.disabled = true; }
+  else { btn.innerHTML = btn.dataset.orig || btn.innerHTML; btn.disabled = false; }
+}
+
+function fmtDate(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+}
+function fmtDateTime(iso) {
+  if (!iso) return 'Never';
+  return new Date(iso).toLocaleString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+
+function statusBadge(s) {
+  var m = { active:['Active','#10b981','#0d2d22'], disabled:['Disabled','#ef4444','#2d0d0d'] };
+  var v = m[s] || ['Unknown','#6b7280','#1a1a1a'];
+  return '<span style="background:'+v[2]+';color:'+v[1]+';padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid '+v[1]+'33">'+v[0]+'</span>';
+}
+function roleBadge(r) {
+  var m = { tenant_admin:['Tenant Admin','#6366f1'], cn_team:['CN Team','#06b6d4'], finance_team:['Finance','#10b981'], cfa_team:['CFA Team','#8b5cf6'], finance_cfa_team:['Finance+CFA','#c4b5fd'], dealer:['Distributor','#ec4899'] };
+  var v = m[r] || ['Unknown','#6b7280'];
+  return '<span style="color:'+v[1]+';font-weight:600;font-size:12px">'+v[0]+'</span>';
+}
+
+// ── State ──────────────────────────────────────────────────────────────────
+var page=1, total=0, perPage=20, activeUserId=null, debTimer=null;
+var slots = { cn_team:null, finance_team:null, cfa_team:null };
+
+// ── Init ───────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+  var u = getUser();
+  if (!u || !getToken()) { window.location.href = '/templates/login.html'; return; }
+
+  document.getElementById('t-name').textContent = u.full_name || '';
+  document.getElementById('t-avatar').textContent = (u.full_name||'U').slice(0,2).toUpperCase();
+  document.getElementById('t-role').textContent = (u.role||'').replace(/_/g,' ');
+  if (u.company_name) document.getElementById('t-company').textContent = u.company_name;
+
+  // Wire up buttons
+  document.getElementById('logout-btn').onclick = doLogout;
+  document.getElementById('add-user-btn').onclick = openCreateModal;
+  document.getElementById('cancel-create-btn').onclick = function() { closeModal('create-modal'); };
+  document.getElementById('create-btn').onclick = createUser;
+  document.getElementById('cancel-reset-btn').onclick = function() { closeModal('reset-modal'); };
+  document.getElementById('confirm-reset-btn').onclick = confirmReset;
+  document.getElementById('cancel-delete-btn').onclick = function() { closeModal('delete-modal'); };
+  document.getElementById('confirm-delete-btn').onclick = confirmDelete;
+  document.getElementById('prev-btn').onclick = function() { if(page>1){page--;loadUsers();} };
+  document.getElementById('next-btn').onclick = function() { page++;loadUsers(); };
+
+  // Wire role radio change
+  document.querySelectorAll('input[name="c-role"]').forEach(function(r) {
+    r.onchange = function() { onRoleChange(this.value); updateRoleUI(); };
+  });
+  updateRoleUI(); // set initial state
+  // Series preview
+  document.getElementById('u-series').addEventListener('input', function(){
+    var s = this.value.toUpperCase() || 'XXX';
+    var now = new Date();
+    var mon = now.toLocaleString('en',{month:'short'}).toUpperCase();
+    var yr  = String(now.getFullYear()).slice(2);
+    document.getElementById('series-preview').textContent = s+'-SD-'+mon+'-'+yr+'-001';
+  });
+  document.getElementById('chk-finance').onchange = onDualChange;
+  document.getElementById('chk-cfa').onchange = onDualChange;
+
+  loadSlots();
+  loadUsers();
+});
+
+function doLogout() {
+  var r = getRefresh();
+  if (r) POST('/auth/logout', { refresh_token: r }).catch(function(){});
+  clearAuth();
+  window.location.href = '/templates/login.html';
+}
+
+// ── Role Slots ─────────────────────────────────────────────────────────────
+async function loadSlots() {
+  try {
+    slots = await GET('/tenant/users/role-slots');
+    renderSlotBar();
+    applySlotCards();
+  } catch(e) { console.warn('slots err', e); }
+}
+
+function renderSlotBar() {
+  var defs = [
+    { k:'cn_team',      l:'CN Team',     i:'🔗' },
+    { k:'finance_team', l:'Finance Team', i:'💰' },
+    { k:'cfa_team',     l:'CFA Team',    i:'📊' }
+  ];
+  document.getElementById('slot-bar').innerHTML = defs.map(function(d) {
+    var t = slots[d.k];
+    var roleLabel = t ? (t.role==='finance_cfa_team'?'Finance+CFA':t.role.replace(/_/g,' ')) : null;
+    return '<div class="slot-chip">' +
+      '<span class="sdot ' + (t?'sdot-taken':'sdot-free') + '"></span>' +
+      '<span style="color:var(--tx-3)">' + d.i + ' ' + d.l + ':</span>' +
+      (t ? '<strong style="color:var(--text)">' + t.name + '</strong><span style="font-size:10px;color:var(--muted)">&nbsp;(' + roleLabel + ')</span>'
+         : '<span style="color:#10b981">Available</span>') +
+    '</div>';
+  }).join('');
+}
+
+function applySlotCards() {
+  var map = {
+    cn_team:      { slot: slots.cn_team,      sub: 'Channel Network · 1 slot' },
+    finance_team: { slot: slots.finance_team, sub: 'Finance operations · 1 slot' },
+    cfa_team:     { slot: slots.cfa_team,     sub: 'CFA operations · 1 slot' }
+  };
+  Object.keys(map).forEach(function(role) {
+    var opt = document.getElementById('opt-' + role);
+    var inp = opt.querySelector('input');
+    var sub = document.getElementById('sub-' + role);
+    var taken = map[role].slot;
+    if (taken) {
+      opt.classList.add('slot-taken');
+      inp.disabled = true;
+      if (inp.checked) {
+        inp.checked = false;
+        document.querySelector('input[name="c-role"][value="dealer"]').checked = true;
+        onRoleChange('dealer');
+      }
+      sub.innerHTML = '<span class="role-taken-tag">✕ ' + taken.name + '</span>';
+    } else {
+      opt.classList.remove('slot-taken');
+      inp.disabled = false;
+      sub.textContent = map[role].sub;
+    }
+  });
+}
+
+function onRoleChange(val) {
+  var panel = document.getElementById('dual-panel');
+  var fChk  = document.getElementById('chk-finance');
+  var cChk  = document.getElementById('chk-cfa');
+  if (val === 'finance_team' || val === 'cfa_team') {
+    panel.classList.add('show');
+    fChk.checked = (val === 'finance_team');
+    cChk.checked = (val === 'cfa_team');
+    onDualChange();
+  } else {
+    panel.classList.remove('show');
+    fChk.checked = false;
+    cChk.checked = false;
+  }
+}
+
+function onDualChange() {
+  var f = document.getElementById('chk-finance').checked;
+  var c = document.getElementById('chk-cfa').checked;
+  var pill = document.getElementById('both-pill');
+  var warn = document.getElementById('dual-warn');
+  if (f && c) pill.classList.add('show'); else pill.classList.remove('show');
+  var msgs = [];
+  if (f && slots.finance_team && !c) msgs.push('Finance slot taken by ' + slots.finance_team.name);
+  if (c && slots.cfa_team && !f)     msgs.push('CFA slot taken by ' + slots.cfa_team.name);
+  if (f && c && (slots.finance_team || slots.cfa_team)) msgs = ['One or both slots already taken'];
+  if (msgs.length) { warn.textContent = '⚠ ' + msgs[0]; warn.style.display='block'; }
+  else warn.style.display='none';
+}
+
+// ── Table ──────────────────────────────────────────────────────────────────
+function debounceLoad() {
+  clearTimeout(debTimer);
+  debTimer = setTimeout(loadUsers, 350);
+}
+
+async function loadUsers() {
+  var s = document.getElementById('search').value;
+  var r = document.getElementById('role-filter').value;
+  var url = '/tenant/users?page=' + page + '&per_page=' + perPage;
+  if (s) url += '&search=' + encodeURIComponent(s);
+  if (r) url += '&role=' + r;
+  try {
+    var d = await GET(url);
+    total = d.total;
+    renderTable(d.users);
+    renderPagination();
+  } catch(e) { toast(e.message || 'Failed to load users', 'error'); }
+}
+
+function renderTable(users) {
+  var me = getUser();
+  var tbody = document.getElementById('user-tbody');
+  if (!users || !users.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="table-empty">No users found. Click "Add User" to get started.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = users.map(function(u, i) {
+    var initials = (u.full_name||'?').slice(0,2).toUpperCase();
+    var isMe = me && u.id === me.id;
+    var actions = isMe ? '<span style="font-size:12px;color:var(--muted)">You</span>' :
+      (u.status==='active'
+        ? '<button class="btn btn-sm btn-warning" data-id="'+u.id+'" data-action="disable">Disable</button>'
+        : '<button class="btn btn-sm btn-success" data-id="'+u.id+'" data-action="enable">Enable</button>'
+      ) +
+      ' <button class="btn btn-sm btn-ghost" data-id="'+u.id+'" data-action="reset" title="Reset Password">🔑</button>' +
+      ' <button class="btn btn-sm btn-danger" data-id="'+u.id+'" data-action="delete" title="Delete">🗑</button>';
+    return '<tr>' +
+      '<td style="color:var(--tx-3)">' + ((page-1)*perPage+i+1) + '</td>' +
+      '<td><div style="display:flex;align-items:center;gap:10px">' +
+        '<div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#4f46e5,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0">' + initials + '</div>' +
+        '<div><div style="font-weight:600;font-size:13.5px">' + (u.distributor_name && u.role==='dealer' ? u.distributor_name : (u.full_name||'')) + '</div>' +
+          (u.role==='dealer' && u.full_name ? '<div style="font-size:11px;color:var(--tx-3)">' + u.full_name + '</div>' : '') +
+          '<div style="font-size:12px;color:var(--tx-4)">' + (u.mobile||'') + '</div>' +
+        '</div>' +
+      '</div></td>' +
+      '<td style="font-size:13px">' +
+        u.email +
+        (u.role==='dealer' ? '<div style="font-size:11.5px;color:var(--tx-3);margin-top:3px">' +
+          (u.sap_code ? '<span style="font-family:JetBrains Mono,monospace;background:var(--primary-bg);padding:1px 5px;border-radius:4px;margin-right:4px">' + u.sap_code + '</span>' : '') +
+          (u.business_group ? '<span style="margin-right:4px">'+u.business_group+'</span>' : '') +
+          (u.region ? '<span style="color:var(--primary)">'+u.region+'</span>' : '') +
+        '</div>' : '') +
+      '</td>' +
+      '<td>' + roleBadge(u.role) + '</td>' +
+      '<td>' + statusBadge(u.status) + '</td>' +
+      '<td style="font-size:13px;color:var(--muted)">' + fmtDateTime(u.last_login) + '</td>' +
+      '<td><div style="display:flex;gap:6px;align-items:center">' + actions + '</div></td>' +
+    '</tr>';
+  }).join('');
+
+  // Wire action buttons via event delegation
+  tbody.querySelectorAll('button[data-action]').forEach(function(btn) {
+    btn.onclick = function() {
+      var id = this.dataset.id;
+      var action = this.dataset.action;
+      if (action === 'disable') setStatus(id, 'disabled');
+      else if (action === 'enable') setStatus(id, 'active');
+      else if (action === 'reset') openReset(id);
+      else if (action === 'delete') openDelete(id);
+    };
+  });
+}
+
+function renderPagination() {
+  var pages = Math.ceil(total / perPage) || 1;
+  document.getElementById('page-info').textContent = total + ' users · Page ' + page + ' of ' + pages;
+  document.getElementById('prev-btn').disabled = (page <= 1);
+  document.getElementById('next-btn').disabled = (page >= pages);
+}
+
+// ── Create User ────────────────────────────────────────────────────────────
+function updateRoleUI(){
+  var sel = document.querySelector('input[name="c-role"]:checked');
+  var role = sel ? sel.value : '';
+  var isDealer = role === 'dealer';
+  document.getElementById('dealer-fields').style.display = isDealer ? 'block' : 'none';
+  var isFCRole = (role === 'finance_team' || role === 'cfa_team');
+  var panel = document.getElementById('dual-panel');
+  if (isFCRole) { panel.classList.add('show'); }
+  else { panel.classList.remove('show'); document.getElementById('chk-finance').checked=false; document.getElementById('chk-cfa').checked=false; }
+}
+
+async function openCreateModal() {
+  // Reset basic fields
+  ['c-name','c-email','c-mobile','c-password',
+   'u-dist-name','u-sap-code','u-biz-group','u-city','u-state','u-sales-rep','u-series'].forEach(function(id){
+    var el = document.getElementById(id); if(el) el.value = '';
+  });
+  var rgn = document.getElementById('u-region'); if(rgn) rgn.value = '';
+  document.querySelectorAll('input[name="credit-check"]').forEach(function(r){ r.checked=false; });
+  document.getElementById('create-error').style.display = 'none';
+  document.getElementById('dual-panel').classList.remove('show');
+  document.getElementById('chk-finance').checked = false;
+  document.getElementById('chk-cfa').checked = false;
+  document.getElementById('both-pill').classList.remove('show');
+  document.getElementById('dual-warn').style.display = 'none';
+  // Default to Distributor role
+  var dealer = document.querySelector('input[name="c-role"][value="dealer"]');
+  if (dealer) { dealer.checked = true; }
+  updateRoleUI();
+  await loadSlots();
+  openModal('create-modal');
+}
+
+async function createUser() {
+  var btn = document.getElementById('create-btn');
+  var errEl = document.getElementById('create-error');
+  errEl.style.display = 'none';
+
+  var sel = document.querySelector('input[name="c-role"]:checked');
+  if (!sel) { errEl.textContent = 'Please select a role.'; errEl.style.display='block'; return; }
+  var rv = sel.value;
+
+  var isFCRole = (rv === 'finance_team' || rv === 'cfa_team');
+  var isF = isFCRole && document.getElementById('chk-finance').checked;
+  var isC = isFCRole && document.getElementById('chk-cfa').checked;
+
+  if (isFCRole && !isF && !isC) {
+    errEl.textContent = 'Please check Finance Team or CFA Team (or both).';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  var name = document.getElementById('c-name').value.trim();
+  var email = document.getElementById('c-email').value.trim();
+  var pwd = document.getElementById('c-password').value;
+
+  if (!name || !email || !pwd) {
+    errEl.textContent = 'Full Name, Email and Password are required.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  var payload = {
+    full_name:       name,
+    email:           email,
+    mobile:          document.getElementById('c-mobile').value.trim() || null,
+    role:            rv,
+    is_finance_team: isF,
+    is_cfa_team:     isC,
+    password:        pwd,
+  };
+
+  // Add distributor fields if Distributor role
+  if (rv === 'dealer') {
+    var ccChecked = document.querySelector('input[name="credit-check"]:checked');
+    payload.distributor_name = document.getElementById('u-dist-name').value.trim() || null;
+    payload.sap_code         = document.getElementById('u-sap-code').value.trim()   || null;
+    payload.dealer_series    = document.getElementById('u-series').value.trim().toUpperCase() || null;
+    payload.business_group   = document.getElementById('u-biz-group').value.trim()  || null;
+    payload.region           = document.getElementById('u-region').value             || null;
+    payload.city             = document.getElementById('u-city').value.trim()        || null;
+    payload.state            = document.getElementById('u-state').value.trim()       || null;
+    payload.credit_check     = ccChecked ? ccChecked.value : null;
+    // Store sales rep in mobile field supplement or as a note - backend uses full_name for display
+    // We'll save sales_rep as a separate field if backend supports it
+    var salesRep = document.getElementById('u-sales-rep').value.trim();
+    if (salesRep) payload.mobile = payload.mobile || salesRep; // fallback store
+  }
+
+  setBtnLoading(btn, true);
+  try {
+    await POST('/tenant/users', payload);
+    toast('User created successfully!', 'success');
+    closeModal('create-modal');
+    loadSlots();
+    loadUsers();
+  } catch(e) {
+    errEl.textContent = e.message || 'Failed to create user';
+    errEl.style.display = 'block';
+  } finally {
+    setBtnLoading(btn, false);
+  }
+}
+
+// ── Actions ────────────────────────────────────────────────────────────────
+async function setStatus(id, status) {
+  try {
+    await PATCH('/tenant/users/' + id + '/status', { status: status });
+    toast('Status updated', 'success');
+    loadUsers();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+function openReset(id) { activeUserId = id; openModal('reset-modal'); }
+async function confirmReset() {
+  var p = document.getElementById('r-password').value;
+  if (!p) { toast('Enter a new password', 'error'); return; }
+  try {
+    await POST('/tenant/users/' + activeUserId + '/reset-password', { new_password: p });
+    toast('Password reset!', 'success');
+    closeModal('reset-modal');
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+function openDelete(id) { activeUserId = id; openModal('delete-modal'); }
+async function confirmDelete() {
+  try {
+    await DELETE('/tenant/users/' + activeUserId);
+    toast('User deleted', 'success');
+    closeModal('delete-modal');
+    loadSlots();
+    loadUsers();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+</script>
+</body>
+</html>

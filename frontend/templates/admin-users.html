@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>All Users – PDCN CRM Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/static/css/dashboard.css"/>
+<script src="/static/js/app.js"></script>
+<style>
+.role-pill{padding:6px 14px;border-radius:20px;border:1.5px solid var(--border-2);background:var(--surface);
+  color:var(--tx-3);font-size:12.5px;font-weight:600;cursor:pointer;transition:all .18s;font-family:'Nunito',sans-serif}
+.role-pill:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-bg)}
+.role-pill.active{background:var(--primary);color:#fff;border-color:var(--primary);box-shadow:0 2px 8px rgba(79,70,229,.25)}
+
+.user-photo{width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0}
+.user-initials{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+
+.stat-chip{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--rl);
+  padding:16px 20px;display:flex;flex-direction:column;gap:4px;box-shadow:var(--s0)}
+.chip-num{font-family:'Plus Jakarta Sans',sans-serif;font-size:24px;font-weight:800;color:var(--text);line-height:1}
+.chip-lbl{font-size:11.5px;color:var(--tx-3);font-weight:600}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="icon">T</div>
+    <div>
+      <div class="name">PDCN <span>CRM</span></div>
+      <div class="badge">Platform Admin</div>
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Platform</div>
+    <a class="nav-item" href="/templates/admin-dashboard.html"><span class="nav-icon">◈</span>Dashboard</a>
+    <a class="nav-item" href="/templates/admin-tenants.html"><span class="nav-icon">◉</span>Tenants</a>
+    <a class="nav-item active" href="/templates/admin-users.html"><span class="nav-icon">◎</span>All Users</a>
+    <a class="nav-item" href="/templates/admin-pricing.html"><span class="nav-icon">💰</span>Pricing Plans</a>
+    <a class="nav-item" href="/templates/admin-videos.html"><span class="nav-icon">🎬</span>Knowledge Videos</a>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">System</div>
+    <a class="nav-item" href="/templates/admin-logs.html"><span class="nav-icon">◌</span>Audit Logs</a>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar" id="sa-avatar">SA</div>
+      <div class="user-info">
+        <div class="user-name" id="sa-name">Super Admin</div>
+        <div class="user-role">Platform Owner</div>
+      </div>
+      <button class="logout-btn" onclick="logout()">⏻</button>
+    </div>
+  </div>
+</aside>
+
+<!-- Main -->
+<div class="main-content">
+  <div class="topbar">
+    <span class="topbar-title">All Platform Users</span>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="topbar-search">
+        <span style="color:var(--tx-4)">⌕</span>
+        <input type="text" id="searchInput" placeholder="Search name or email…" oninput="filterUsers()"/>
+      </div>
+      <div id="total-badge" style="font-size:12px;font-weight:700;color:var(--tx-3);padding:6px 14px;background:var(--primary-bg);border:1.5px solid var(--blue-border);border-radius:20px">Loading…</div>
+    </div>
+  </div>
+
+  <div class="page-content">
+
+    <!-- Stats row -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px" id="stats-grid">
+      <div class="stat-chip"><div class="chip-num" id="stat-active">—</div><div class="chip-lbl">Active Users</div></div>
+      <div class="stat-chip"><div class="chip-num" id="stat-disabled">—</div><div class="chip-lbl">Disabled</div></div>
+      <div class="stat-chip"><div class="chip-num" id="stat-admins">—</div><div class="chip-lbl">Tenant Admins</div></div>
+      <div class="stat-chip"><div class="chip-num" id="stat-deleted">—</div><div class="chip-lbl">Deleted</div></div>
+    </div>
+
+    <!-- Filters -->
+    <div class="table-card" style="padding:18px 22px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center" id="roleFilters">
+          <button class="role-pill active" onclick="setRole(this,'all')">All Roles</button>
+          <button class="role-pill" onclick="setRole(this,'tenant_admin')">Tenant Admin</button>
+          <button class="role-pill" onclick="setRole(this,'cn_team')">CN Team</button>
+          <button class="role-pill" onclick="setRole(this,'finance_team')">Finance Team</button>
+          <button class="role-pill" onclick="setRole(this,'cfa_team')">CFA Team</button>
+          <button class="role-pill" onclick="setRole(this,'finance_cfa_team')">Finance+CFA</button>
+          <button class="role-pill" onclick="setRole(this,'dealer')">Dealer</button>
+        </div>
+        <div style="display:flex;gap:8px">
+          <select id="statusFilter" onchange="filterUsers()" class="filter-select">
+            <option value="">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="disabled">Disabled</option>
+          </select>
+          <select id="tenantFilter" onchange="filterUsers()" class="filter-select">
+            <option value="">All Tenants</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+      <div class="table-header">
+        <h3>Users</h3>
+        <span id="result-count" style="font-size:13px;color:var(--tx-3)">Loading…</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Tenant</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Last Login</th>
+              <th>Joined</th>
+            </tr>
+          </thead>
+          <tbody id="users-body">
+            <tr><td colspan="6" class="table-empty">Loading users…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination" id="pagination" style="display:none">
+        <span id="page-info">—</span>
+        <div class="pagination-btns" id="page-btns"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var allUsers=[], filtered=[], currentPage=1, pageSize=15, roleFilter='all';
+
+document.addEventListener('DOMContentLoaded', function(){
+  if(!requireAuth()) return;
+  var u = Auth.getUser();
+  if(!u || u.role !== 'super_admin'){ window.location.href='/templates/login.html'; return; }
+  document.getElementById('sa-name').textContent = u.full_name || 'Super Admin';
+  document.getElementById('sa-avatar').textContent = (u.full_name||'SA').slice(0,2).toUpperCase();
+  loadUsers();
+});
+
+async function loadUsers(){
+  try{
+    var data = await api('/admin/users?per_page=500');
+    allUsers = data.users || [];
+
+    // Populate tenant dropdown
+    var seen={}, sel=document.getElementById('tenantFilter');
+    allUsers.forEach(function(u){
+      if(u.tenant_id && u.tenant_name && !seen[u.tenant_id]){
+        seen[u.tenant_id]=1;
+        var o=document.createElement('option');
+        o.value=u.tenant_id; o.textContent=u.tenant_name;
+        sel.appendChild(o);
+      }
+    });
+
+    updateStats();
+    filterUsers();
+  }catch(e){
+    document.getElementById('users-body').innerHTML='<tr><td colspan="6" class="table-empty">Failed to load users: '+e.message+'</td></tr>';
+  }
+}
+
+function updateStats(){
+  document.getElementById('stat-active').textContent = allUsers.filter(function(u){return u.status==='active';}).length;
+  document.getElementById('stat-disabled').textContent = allUsers.filter(function(u){return u.status==='disabled';}).length;
+  document.getElementById('stat-admins').textContent = allUsers.filter(function(u){return u.role==='tenant_admin';}).length;
+  document.getElementById('stat-deleted').textContent = allUsers.filter(function(u){return u.deleted_at;}).length;
+  document.getElementById('total-badge').textContent = allUsers.length + ' Total Users';
+}
+
+function setRole(btn, role){
+  document.querySelectorAll('.role-pill').forEach(function(p){p.classList.remove('active');});
+  btn.classList.add('active');
+  roleFilter = role;
+  currentPage = 1;
+  filterUsers();
+}
+
+function filterUsers(){
+  var search = document.getElementById('searchInput').value.toLowerCase();
+  var status = document.getElementById('statusFilter').value;
+  var tenantId = document.getElementById('tenantFilter').value;
+
+  filtered = allUsers.filter(function(u){
+    if(status === '' && u.deleted_at) return false; // hide deleted unless filtering for them
+    var ms = !search || (u.full_name||'').toLowerCase().includes(search) || (u.email||'').toLowerCase().includes(search);
+    var mst = !status || u.status === status;
+    var mt = !tenantId || u.tenant_id === tenantId;
+    var mr = roleFilter === 'all' || u.role === roleFilter;
+    return ms && mst && mt && mr;
+  });
+
+  document.getElementById('result-count').textContent = filtered.length + ' user' + (filtered.length!==1?'s':'');
+  currentPage = 1;
+  renderTable();
+}
+
+function renderTable(){
+  var start = (currentPage-1)*pageSize;
+  var page = filtered.slice(start, start+pageSize);
+  var tbody = document.getElementById('users-body');
+
+  if(!page.length){
+    tbody.innerHTML='<tr><td colspan="6" class="table-empty">No users found</td></tr>';
+    document.getElementById('pagination').style.display='none';
+    return;
+  }
+
+  tbody.innerHTML = page.map(function(u){
+    var initials = (u.full_name||u.email||'?').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+    var col = avatarColor(u.email);
+    var avatarHtml = u.photo_url
+      ? '<img class="user-photo" src="'+u.photo_url+'" alt=""/>'
+      : '<div class="user-initials" style="background:'+col+'">'+initials+'</div>';
+    var lastLogin = u.last_login || u.last_login_at
+      ? formatDateTime(u.last_login || u.last_login_at)
+      : '<span style="color:var(--tx-4)">Never</span>';
+    var tenantBadge = u.tenant_name && u.tenant_name !== '—'
+      ? '<span style="font-size:11px;padding:2px 8px;border-radius:10px;background:var(--primary-bg);color:var(--primary);font-weight:600">'+u.tenant_name+'</span>'
+      : '<span style="color:var(--tx-4)">—</span>';
+    return '<tr>'+
+      '<td><div class="user-cell">'+avatarHtml+'<div class="user-cell-info">'+
+        '<div class="user-cell-name">'+escHtml(u.full_name||'—')+'</div>'+
+        '<div class="user-cell-email">'+escHtml(u.email)+'</div>'+
+      '</div></div></td>'+
+      '<td>'+tenantBadge+'</td>'+
+      '<td>'+roleBadge(u.role)+'</td>'+
+      '<td>'+statusBadge(u.status)+'</td>'+
+      '<td style="font-size:13px;color:var(--tx-3)">'+lastLogin+'</td>'+
+      '<td style="font-size:13px;color:var(--tx-3)">'+formatDate(u.created_at)+'</td>'+
+    '</tr>';
+  }).join('');
+
+  renderPagination();
+}
+
+function renderPagination(){
+  var total = Math.ceil(filtered.length / pageSize);
+  var pg = document.getElementById('pagination');
+  if(total <= 1){ pg.style.display='none'; return; }
+  pg.style.display='flex';
+  document.getElementById('page-info').textContent = 'Page '+currentPage+' of '+total;
+  var btns = '';
+  btns += '<button class="page-btn" '+(currentPage===1?'disabled':'')+' onclick="goPage('+(currentPage-1)+')">‹</button>';
+  for(var i=1;i<=total;i++){
+    if(i===1||i===total||Math.abs(i-currentPage)<=1){
+      btns += '<button class="page-btn '+(i===currentPage?'active':'')+'" onclick="goPage('+i+')">'+i+'</button>';
+    } else if(Math.abs(i-currentPage)===2){
+      btns += '<span style="padding:5px 3px;color:var(--tx-4)">…</span>';
+    }
+  }
+  btns += '<button class="page-btn" '+(currentPage===total?'disabled':'')+' onclick="goPage('+(currentPage+1)+')">›</button>';
+  document.getElementById('page-btns').innerHTML = btns;
+}
+
+function goPage(p){ currentPage=p; renderTable(); }
+
+function avatarColor(email){
+  var colors=['#4f46e5','#7c3aed','#0891b2','#059669','#d97706','#dc2626','#db2777'];
+  var hash=0;
+  for(var i=0;i<(email||'').length;i++) hash=(hash*31+email.charCodeAt(i))%colors.length;
+  return colors[Math.abs(hash)];
+}
+
+function escHtml(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function exportCSV(){
+  var rows = [['Name','Email','Tenant','Role','Status','Joined']];
+  filtered.forEach(function(u){
+    rows.push([u.full_name||'',u.email,u.tenant_name||'',u.role,u.status,formatDate(u.created_at)]);
+  });
+  var csv = rows.map(function(r){return r.map(function(v){return '"'+String(v).replace(/"/g,'""')+'"';}).join(',');}).join('\n');
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download = 'platform-users-'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+}
+</script>
+</body>
+</html>

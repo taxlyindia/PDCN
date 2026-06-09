@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>PDCN CRM – Enterprise PDCN Workflow Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+/* ═══════════════════════════════════════════════════════════
+   PDCN CRM Landing Page — Vibrant & Colourful
+   Deep indigo hero · Gradient sections · Vivid accents
+═══════════════════════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --indigo:  #4338ca;
+  --indigo2: #6366f1;
+  --indigo3: #818cf8;
+  --violet:  #7c3aed;
+  --violet2: #a78bfa;
+  --gold:    #f59e0b;
+  --gold2:   #fbbf24;
+  --rose:    #e11d48;
+  --teal:    #0d9488;
+  --green:   #059669;
+  --sky:     #0284c7;
+  --orange:  #ea580c;
+  --pink:    #db2777;
+  --ink:     #0f172a;
+  --ink2:    #1e293b;
+  --slate:   #475569;
+  --mist:    #94a3b8;
+  --ease:    cubic-bezier(.16,1,.3,1);
+}
+html{scroll-behavior:smooth}
+body{font-family:'Nunito',sans-serif;color:var(--ink);overflow-x:hidden;cursor:none}
+
+/* ── Custom cursor ── */
+#cur{width:9px;height:9px;background:var(--indigo2);border-radius:50%;position:fixed;top:0;left:0;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:multiply;transition:width .15s,height .15s}
+#cur-ring{width:34px;height:34px;border:1.5px solid rgba(99,102,241,.4);border-radius:50%;position:fixed;top:0;left:0;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:all .12s var(--ease)}
+body:has(a:hover) #cur{width:16px;height:16px}
+body:has(a:hover) #cur-ring{width:48px;height:48px;border-color:var(--indigo2)}
+
+/* ═══ NAVIGATION ═════════════════════════════════════════ */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;height:70px;padding:0 6vw;
+  display:flex;align-items:center;justify-content:space-between;
+  transition:all .35s
+}
+nav.scrolled{
+  background:rgba(255,255,255,.92);backdrop-filter:blur(20px);
+  border-bottom:1px solid rgba(99,102,241,.15);
+  box-shadow:0 2px 20px rgba(15,23,42,.08)
+}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo-mark{
+  width:38px;height:38px;
+  background:linear-gradient(135deg,var(--indigo),var(--violet));
+  border-radius:9px;display:flex;align-items:center;justify-content:center;
+  font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:18px;color:#fff;
+  box-shadow:0 4px 12px rgba(99,102,241,.35)
+}
+.logo-txt{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.15rem;font-weight:800;color:var(--ink);letter-spacing:-.01em}
+.logo-txt span{color:var(--indigo)}
+
+.nav-links{display:flex;align-items:center;gap:36px;list-style:none}
+.nav-links a{
+  font-size:.78rem;font-weight:600;color:rgba(255,255,255,.8);
+  text-decoration:none;letter-spacing:.1em;text-transform:uppercase;
+  position:relative;padding-bottom:3px;transition:color .2s
+}
+nav.scrolled .nav-links a{color:var(--slate)}
+.nav-links a::after{content:'';position:absolute;bottom:0;left:0;width:0;height:2px;background:var(--gold);border-radius:2px;transition:width .3s var(--ease)}
+.nav-links a:hover::after{width:100%}
+nav.scrolled .nav-links a:hover{color:var(--indigo)}
+
+.nav-cta{
+  padding:9px 22px;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  color:var(--ink) !important;font-weight:800 !important;
+  border-radius:7px;text-decoration:none !important;
+  transition:transform .2s,box-shadow .2s !important;letter-spacing:.03em !important;
+  box-shadow:0 4px 12px rgba(245,158,11,.35)
+}
+.nav-cta::after{display:none !important}
+.nav-cta:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(245,158,11,.5) !important}
+
+/* ═══ HERO — deep gradient ═══════════════════════════════ */
+#home{
+  min-height:100vh;display:flex;align-items:center;
+  padding:100px 6vw 70px;position:relative;overflow:hidden;
+  background:linear-gradient(135deg,#1e1b4b 0%,#312e81 30%,#4338ca 60%,#6d28d9 85%,#7c3aed 100%)
+}
+
+/* Mesh overlay */
+#home::before{
+  content:'';position:absolute;inset:0;z-index:0;
+  background:
+    radial-gradient(ellipse 60% 50% at 20% 30%,rgba(99,102,241,.4),transparent),
+    radial-gradient(ellipse 50% 60% at 80% 70%,rgba(124,58,237,.35),transparent),
+    radial-gradient(ellipse 40% 40% at 50% 10%,rgba(245,158,11,.12),transparent);
+}
+/* Grid pattern */
+#home::after{
+  content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);
+  background-size:56px 56px;
+  mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black,transparent)
+}
+
+/* Floating orbs */
+.orb{position:absolute;border-radius:50%;pointer-events:none;filter:blur(70px);z-index:0}
+.o1{width:600px;height:600px;background:radial-gradient(rgba(245,158,11,.18),transparent 70%);top:-180px;right:-60px;animation:float1 12s ease-in-out infinite alternate}
+.o2{width:480px;height:480px;background:radial-gradient(rgba(16,185,129,.14),transparent 70%);bottom:-120px;left:-80px;animation:float1 16s ease-in-out 2s infinite alternate-reverse}
+.o3{width:320px;height:320px;background:radial-gradient(rgba(236,72,153,.12),transparent 70%);top:40%;right:20%;animation:float1 10s ease-in-out 1s infinite alternate}
+@keyframes float1{from{transform:translate(0,0)}to{transform:translate(30px,40px)}}
+
+.hero-inner{
+  position:relative;z-index:1;
+  max-width:1280px;margin:0 auto;width:100%;
+  display:grid;grid-template-columns:1fr 1fr;gap:70px;align-items:center
+}
+
+/* Hero chip */
+.chip{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 16px;border-radius:40px;
+  background:rgba(255,255,255,.12);backdrop-filter:blur(8px);
+  border:1px solid rgba(255,255,255,.25);
+  font-size:.72rem;font-weight:700;color:#fff;
+  letter-spacing:.1em;text-transform:uppercase;margin-bottom:22px
+}
+.chip-dot{width:6px;height:6px;background:var(--gold);border-radius:50%;animation:pulse 2s ease-in-out infinite;box-shadow:0 0 8px var(--gold)}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.6)}}
+
+h1{
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:clamp(2.8rem,5vw,5rem);
+  font-weight:300;line-height:1.05;
+  color:#fff;margin-bottom:20px;letter-spacing:-.02em
+}
+h1 strong{font-weight:800;display:block}
+h1 em{font-style:italic;color:var(--gold);font-weight:400}
+
+.hero-sub{
+  font-size:1.05rem;color:rgba(255,255,255,.75);
+  line-height:1.8;margin-bottom:38px;max-width:480px
+}
+
+.cta-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.btn-hero-primary{
+  display:inline-flex;align-items:center;gap:9px;
+  padding:14px 32px;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  color:var(--ink);font-weight:800;font-size:.95rem;
+  border-radius:9px;text-decoration:none;border:none;cursor:none;
+  transition:transform .2s var(--ease),box-shadow .2s;letter-spacing:.01em;
+  box-shadow:0 4px 20px rgba(245,158,11,.45)
+}
+.btn-hero-primary:hover{transform:translateY(-3px);box-shadow:0 12px 36px rgba(245,158,11,.55)}
+.btn-hero-outline{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:14px 28px;
+  border:2px solid rgba(255,255,255,.35);
+  color:rgba(255,255,255,.9);font-size:.95rem;font-weight:600;
+  border-radius:9px;text-decoration:none;cursor:none;
+  transition:all .2s;backdrop-filter:blur(8px)
+}
+.btn-hero-outline:hover{border-color:#fff;color:#fff;background:rgba(255,255,255,.1)}
+
+.hero-kpis{
+  display:flex;gap:40px;margin-top:52px;
+  padding-top:36px;
+  border-top:1px solid rgba(255,255,255,.15)
+}
+.kpi-num{font-family:'Plus Jakarta Sans',sans-serif;font-size:2rem;font-weight:800;color:var(--gold);line-height:1}
+.kpi-lbl{font-size:.7rem;color:rgba(255,255,255,.6);margin-top:4px;letter-spacing:.05em;text-transform:uppercase}
+
+/* Hero video player */
+.hero-viz{position:relative;z-index:1}
+.hv-wrap{
+  border-radius:20px;overflow:hidden;
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.2);
+  box-shadow:0 40px 80px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.06);
+  backdrop-filter:blur(10px);
+  animation:levitate 8s ease-in-out infinite
+}
+@keyframes levitate{0%,100%{transform:translateY(0) rotate(-.3deg)}50%{transform:translateY(-12px) rotate(.3deg)}}
+.hv-video-area{position:relative;aspect-ratio:16/9;background:#0a0a1a;cursor:pointer;overflow:hidden}
+.hv-video-area video{width:100%;height:100%;display:block;object-fit:cover}
+.hv-overlay{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  background:linear-gradient(135deg,rgba(30,27,75,.6),rgba(67,56,202,.4));
+  transition:opacity .3s
+}
+.hv-play-btn{
+  width:72px;height:72px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:28px;cursor:pointer;
+  transition:transform .25s,box-shadow .25s;
+  box-shadow:0 8px 32px rgba(245,158,11,.5);border:none;color:var(--ink)
+}
+.hv-play-btn:hover{transform:scale(1.12);box-shadow:0 16px 48px rgba(245,158,11,.7)}
+.hv-video-area:hover .hv-overlay{opacity:.9}
+.hv-video-area.playing .hv-overlay{opacity:0;pointer-events:none}
+.hv-video-area.playing:hover .hv-overlay{opacity:1;pointer-events:all}
+.hv-footer{
+  padding:14px 18px;
+  background:rgba(255,255,255,.08);
+  display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;
+  border-top:1px solid rgba(255,255,255,.1)
+}
+.hv-title{font-size:13px;font-weight:700;color:#fff;line-height:1.3}
+.hv-cat{font-size:10px;color:var(--gold);margin-top:3px;font-weight:600;text-transform:uppercase;letter-spacing:.08em}
+.hv-controls{display:flex;gap:6px}
+.hv-ctrl-btn{
+  width:30px;height:30px;border-radius:7px;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);
+  color:#fff;font-size:13px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:all .2s
+}
+.hv-ctrl-btn:hover{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.4)}
+.hv-playlist{
+  padding:10px 18px 14px;
+  background:rgba(255,255,255,.05);
+  border-top:1px solid rgba(255,255,255,.08);
+  display:flex;flex-direction:column;gap:6px;
+  max-height:160px;overflow-y:auto
+}
+.hv-playlist::-webkit-scrollbar{width:3px}
+.hv-playlist::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:2px}
+.hv-pl-item{
+  display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:8px;
+  cursor:pointer;transition:all .2s;border:1px solid transparent
+}
+.hv-pl-item:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.15)}
+.hv-pl-item.active{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.3)}
+.hv-pl-num{
+  width:22px;height:22px;border-radius:50%;
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:700;color:#fff;flex-shrink:0
+}
+.hv-pl-item.active .hv-pl-num{background:var(--gold);color:var(--ink);border-color:var(--gold)}
+.hv-pl-title{font-size:12px;font-weight:600;color:rgba(255,255,255,.8);line-height:1.3}
+.hv-pl-playing{margin-left:auto;font-size:11px;color:var(--gold);flex-shrink:0}
+.hv-empty{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  aspect-ratio:16/9;background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.15);border-radius:20px
+}
+.hv-empty-title{font-size:1.1rem;font-weight:600;color:rgba(255,255,255,.7);margin-bottom:6px}
+.hv-empty-sub{font-size:12px;color:rgba(255,255,255,.4);text-align:center;max-width:220px;line-height:1.6}
+
+/* ═══ SHARED SECTION STYLES ══════════════════════════════ */
+section{padding:110px 6vw;position:relative}
+.wrap{max-width:1280px;margin:0 auto}
+.divider{height:1px;max-width:1280px;margin:0 auto;background:linear-gradient(90deg,transparent,#e2e8f0,transparent)}
+
+.sec-ey{
+  font-size:.7rem;font-weight:800;color:var(--indigo);
+  letter-spacing:.18em;text-transform:uppercase;
+  margin-bottom:14px;display:flex;align-items:center;gap:10px
+}
+.sec-ey::before{content:'';width:28px;height:2px;background:linear-gradient(90deg,var(--indigo),var(--violet));border-radius:2px}
+h2{
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:clamp(2rem,3.5vw,3.2rem);
+  font-weight:800;color:var(--ink2);line-height:1.15;
+  margin-bottom:14px;letter-spacing:-.02em
+}
+h2 em{font-style:italic;color:var(--indigo)}
+.sec-sub{font-size:1.05rem;color:var(--slate);line-height:1.8;max-width:540px}
+
+/* ═══ FEATURES ════════════════════════════════════════════ */
+#features{
+  background:linear-gradient(180deg,#fff 0%,#faf5ff 100%)
+}
+
+.feat-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:1px;background:#e2e8f0;
+  border-radius:20px;overflow:hidden;
+  border:1px solid #e2e8f0;
+  box-shadow:0 4px 32px rgba(15,23,42,.07);
+  margin-top:56px
+}
+.ft{
+  background:#fff;padding:36px 32px;
+  position:relative;overflow:hidden;transition:all .25s
+}
+.ft:hover{background:#faf5ff;transform:none}
+.ft::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  opacity:0;transition:opacity .25s
+}
+.ft:hover::before{opacity:1}
+.ft.c1::before{background:linear-gradient(90deg,var(--indigo),var(--violet))}
+.ft.c2::before{background:linear-gradient(90deg,var(--teal),var(--green))}
+.ft.c3::before{background:linear-gradient(90deg,var(--rose),var(--pink))}
+.ft.c4::before{background:linear-gradient(90deg,var(--gold),var(--orange))}
+.ft.c5::before{background:linear-gradient(90deg,var(--sky),var(--teal))}
+.ft.c6::before{background:linear-gradient(90deg,var(--violet),var(--pink))}
+.ft.c7::before{background:linear-gradient(90deg,var(--green),var(--teal))}
+.ft.c8::before{background:linear-gradient(90deg,var(--orange),var(--rose))}
+.ft.tall{grid-row:span 2}
+
+.fi-wrap{
+  width:52px;height:52px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;margin-bottom:20px;flex-shrink:0
+}
+.fi-wrap.c1{background:#eef2ff;box-shadow:inset 0 0 0 1px rgba(99,102,241,.2)}
+.fi-wrap.c2{background:#f0fdfa;box-shadow:inset 0 0 0 1px rgba(13,148,136,.2)}
+.fi-wrap.c3{background:#fff1f2;box-shadow:inset 0 0 0 1px rgba(225,29,72,.2)}
+.fi-wrap.c4{background:#fffbeb;box-shadow:inset 0 0 0 1px rgba(245,158,11,.2)}
+.fi-wrap.c5{background:#f0f9ff;box-shadow:inset 0 0 0 1px rgba(2,132,199,.2)}
+.fi-wrap.c6{background:#fdf4ff;box-shadow:inset 0 0 0 1px rgba(124,58,237,.2)}
+.fi-wrap.c7{background:#f0fdf4;box-shadow:inset 0 0 0 1px rgba(5,150,105,.2)}
+.fi-wrap.c8{background:#fff7ed;box-shadow:inset 0 0 0 1px rgba(234,88,12,.2)}
+
+.ft-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.15rem;font-weight:700;color:var(--ink2);margin-bottom:10px}
+.ft.tall .ft-title{font-size:1.4rem}
+.ft-desc{font-size:.9rem;color:var(--slate);line-height:1.75}
+.ft-tag{
+  display:inline-block;margin-top:16px;
+  padding:3px 10px;border-radius:5px;
+  font-size:.65rem;font-weight:700;
+  letter-spacing:.07em;text-transform:uppercase
+}
+.ft.c1 .ft-tag{background:#eef2ff;color:var(--indigo)}
+.ft.c2 .ft-tag{background:#f0fdfa;color:var(--teal)}
+.ft.c3 .ft-tag{background:#fff1f2;color:var(--rose)}
+.ft.c4 .ft-tag{background:#fffbeb;color:var(--orange)}
+.ft.c5 .ft-tag{background:#f0f9ff;color:var(--sky)}
+.ft.c6 .ft-tag{background:#fdf4ff;color:var(--violet)}
+.ft.c7 .ft-tag{background:#f0fdf4;color:var(--green)}
+.ft.c8 .ft-tag{background:#fff7ed;color:var(--orange)}
+
+/* ═══ WORKFLOW STEPS ══════════════════════════════════════ */
+.wf-section{
+  padding:0 6vw 110px;
+  background:linear-gradient(180deg,#faf5ff 0%,#f0f4ff 100%)
+}
+.wf-inner{max-width:1280px;margin:0 auto}
+.wf-steps{display:flex;position:relative;margin-top:56px;gap:0}
+.wf-steps::before{
+  content:'';position:absolute;top:32px;left:32px;right:32px;height:2px;
+  background:linear-gradient(90deg,var(--indigo),var(--violet),var(--pink),var(--orange),var(--gold));
+  z-index:0
+}
+.ws{flex:1;display:flex;flex-direction:column;align-items:center;text-align:center;position:relative;z-index:1;padding:0 8px}
+.wn{
+  width:64px;height:64px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:1.4rem;font-weight:800;
+  color:#fff;margin-bottom:18px;flex-shrink:0;
+  box-shadow:0 6px 20px rgba(0,0,0,.2)
+}
+.wn1{background:linear-gradient(135deg,var(--indigo),var(--violet))}
+.wn2{background:linear-gradient(135deg,var(--violet),var(--pink))}
+.wn3{background:linear-gradient(135deg,var(--pink),var(--rose))}
+.wn4{background:linear-gradient(135deg,var(--rose),var(--orange))}
+.wn5{background:linear-gradient(135deg,var(--orange),var(--gold))}
+.wt{font-family:'Plus Jakarta Sans',sans-serif;font-size:.9rem;font-weight:700;color:var(--ink2);margin-bottom:7px}
+.wd{font-size:.82rem;color:var(--slate);line-height:1.6}
+
+/* ═══ PRICING ══════════════════════════════════════════════ */
+#pricing{
+  background:linear-gradient(180deg,#f0f4ff 0%,#fdf4ff 50%,#fff 100%)
+}
+.pricing-head{text-align:center;margin-bottom:56px}
+.pricing-head .sec-ey{justify-content:center;margin-bottom:14px}
+.pricing-head .sec-ey::before{display:none}
+.pricing-head .sec-ey::after{content:'';width:28px;height:2px;background:linear-gradient(90deg,var(--violet),var(--indigo));border-radius:2px}
+.pricing-head h2{text-align:center}
+.pricing-head .sec-sub{text-align:center;margin:0 auto}
+
+/* Billing toggle */
+.btoggle{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:48px}
+.btoggle-track{
+  width:54px;height:28px;background:#e2e8f0;border-radius:14px;
+  cursor:none;position:relative;transition:background .2s;
+  border:1px solid #cbd5e1
+}
+.btoggle-track.annual{background:linear-gradient(135deg,var(--indigo),var(--violet))}
+.btoggle-knob{
+  width:22px;height:22px;background:#fff;border-radius:50%;
+  position:absolute;top:2px;left:2px;transition:left .2s var(--ease);
+  box-shadow:0 1px 4px rgba(15,23,42,.2)
+}
+.btoggle-track.annual .btoggle-knob{left:28px}
+.btog-label{font-size:.85rem;font-weight:600;color:var(--slate);cursor:none;transition:color .2s}
+.btog-label.active{color:var(--ink2)}
+.save-pill{
+  padding:3px 11px;border-radius:20px;
+  background:linear-gradient(135deg,var(--gold),var(--gold2));
+  color:var(--ink);font-size:.68rem;font-weight:800;
+  box-shadow:0 2px 8px rgba(245,158,11,.3)
+}
+
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;align-items:start;max-width:1060px;margin:0 auto}
+.pc{
+  background:#fff;border:1.5px solid #e2e8f0;border-radius:22px;
+  padding:38px 32px;position:relative;
+  transition:transform .25s,box-shadow .25s,border-color .25s;
+  box-shadow:0 2px 12px rgba(15,23,42,.06)
+}
+.pc:hover{transform:translateY(-6px);box-shadow:0 16px 48px rgba(15,23,42,.1);border-color:#c7d2fe}
+.pc.hot{
+  border-color:var(--indigo);
+  background:linear-gradient(180deg,#f5f3ff 0%,#fff 100%);
+  transform:translateY(-16px);
+  box-shadow:0 24px 64px rgba(67,56,202,.2),0 0 0 2px var(--indigo)
+}
+.pc.hot:hover{transform:translateY(-20px)}
+.hot-badge{
+  position:absolute;top:-14px;left:50%;transform:translateX(-50%);
+  padding:5px 20px;
+  background:linear-gradient(135deg,var(--indigo),var(--violet));
+  border-radius:20px;font-size:.65rem;font-weight:800;
+  color:#fff;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap;
+  box-shadow:0 4px 12px rgba(99,102,241,.4)
+}
+.pt{font-size:.72rem;font-weight:700;color:var(--slate);text-transform:uppercase;letter-spacing:.1em;margin-bottom:20px}
+.pa{display:flex;align-items:flex-start;gap:4px;margin-bottom:6px}
+.pc-sym{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.4rem;font-weight:700;color:var(--indigo);margin-top:8px}
+.pc-num{font-family:'Plus Jakarta Sans',sans-serif;font-size:3rem;font-weight:800;color:var(--ink);line-height:1}
+.pc-per{font-size:.78rem;color:var(--slate);margin-top:6px}
+.pc-save{font-size:.75rem;color:var(--green);margin-top:4px;min-height:1.1em;font-weight:700}
+.pc-desc{
+  font-size:.9rem;color:var(--slate);line-height:1.65;
+  margin:18px 0;padding:18px 0;
+  border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0
+}
+.pc-feats{list-style:none;display:flex;flex-direction:column;gap:12px;margin-bottom:32px}
+.pc-feats li{display:flex;align-items:flex-start;gap:10px;font-size:.9rem;color:var(--ink2);font-weight:500}
+.pc-feats li::before{content:'✓';color:var(--green);font-weight:800;flex-shrink:0;margin-top:1px}
+.pc-feats li.off{color:var(--mist);font-weight:400}
+.pc-feats li.off::before{content:'—';color:var(--mist);font-weight:400}
+.gst-note{text-align:center;font-size:.75rem;color:var(--mist);margin-top:18px;letter-spacing:.02em}
+
+.btn-pc{
+  width:100%;padding:13px;border-radius:10px;
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:.9rem;font-weight:700;
+  text-align:center;display:block;text-decoration:none;
+  cursor:none;transition:all .2s
+}
+.btn-pc-outline{
+  border:2px solid #e2e8f0;color:var(--slate);background:none
+}
+.btn-pc-outline:hover{border-color:var(--indigo);color:var(--indigo);background:#eef2ff}
+.btn-pc-primary{
+  background:linear-gradient(135deg,var(--indigo),var(--violet));
+  color:#fff;border:none;
+  box-shadow:0 4px 14px rgba(99,102,241,.35)
+}
+.btn-pc-primary:hover{box-shadow:0 8px 24px rgba(99,102,241,.5);transform:translateY(-2px)}
+
+/* ═══ CONTACT ═════════════════════════════════════════════ */
+#contact{background:#fff}
+.contact-grid{display:grid;grid-template-columns:1fr 1.3fr;gap:80px;align-items:start}
+.ci-item{display:flex;gap:16px;align-items:flex-start;margin-bottom:30px}
+.ci-icon{
+  width:46px;height:46px;border-radius:11px;
+  display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0
+}
+.ci-icon.c1{background:#eef2ff}
+.ci-icon.c2{background:#f0fdf4}
+.ci-icon.c3{background:#f0f9ff}
+.ci-icon.c4{background:#fffbeb}
+.ci-label{font-size:.68rem;font-weight:700;color:var(--indigo);letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px}
+.ci-val{font-size:1rem;color:var(--ink2);line-height:1.6;font-weight:500}
+.ci-val a{color:var(--ink2);text-decoration:none;transition:color .2s}
+.ci-val a:hover{color:var(--indigo)}
+.map-box{margin-top:32px;border-radius:14px;overflow:hidden;border:1px solid #e2e8f0;height:200px}
+.map-box iframe{width:100%;height:100%;border:0}
+
+.cf-card{
+  background:#fff;border:1.5px solid #e2e8f0;border-radius:22px;
+  padding:44px 40px;position:relative;overflow:hidden;
+  box-shadow:0 4px 24px rgba(15,23,42,.07)
+}
+.cf-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:4px;
+  background:linear-gradient(90deg,var(--indigo),var(--violet),var(--pink))
+}
+.cf-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.6rem;font-weight:800;color:var(--ink2);margin-bottom:6px}
+.cf-sub{font-size:.9rem;color:var(--slate);margin-bottom:30px}
+.cf-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.cf-label{display:block;font-family:'Plus Jakarta Sans',sans-serif;font-size:.68rem;font-weight:700;color:var(--indigo);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
+.cf-input{
+  width:100%;padding:11px 14px;
+  background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:9px;
+  color:var(--ink);font-family:'Nunito',sans-serif;font-size:.95rem;
+  outline:none;transition:all .18s
+}
+.cf-input:focus{border-color:var(--indigo);box-shadow:0 0 0 3px rgba(99,102,241,.1);background:#fff}
+.cf-input::placeholder{color:var(--mist);font-style:italic}
+textarea.cf-input{min-height:110px;resize:vertical;line-height:1.6}
+select.cf-input option{background:#fff}
+.cf-submit{
+  width:100%;padding:14px;
+  background:linear-gradient(135deg,var(--indigo),var(--violet));
+  color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:.95rem;
+  border:none;border-radius:10px;cursor:none;transition:all .2s;
+  box-shadow:0 4px 14px rgba(99,102,241,.35);
+  display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px
+}
+.cf-submit:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(99,102,241,.5)}
+.cf-ok{display:none;text-align:center;padding:18px 0;color:var(--green);font-size:1rem;font-weight:700}
+
+/* ═══ FOOTER ══════════════════════════════════════════════ */
+footer{
+  background:linear-gradient(135deg,#1e1b4b 0%,#312e81 50%,#4c1d95 100%);
+  padding:60px 6vw 40px;color:rgba(255,255,255,.55)
+}
+.ft-inner{
+  max-width:1280px;margin:0 auto;
+  display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:56px;
+  padding-bottom:48px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:28px
+}
+.ft-brand p{font-size:.9rem;line-height:1.75;margin-top:14px;max-width:260px}
+.ft-col-title{font-size:.68rem;font-weight:800;color:#fff;letter-spacing:.12em;text-transform:uppercase;margin-bottom:18px}
+.ft-links{list-style:none;display:flex;flex-direction:column;gap:10px}
+.ft-links a{font-size:.9rem;color:rgba(255,255,255,.5);text-decoration:none;transition:color .2s}
+.ft-links a:hover{color:var(--gold)}
+.ft-bottom{max-width:1280px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px}
+.ft-copy{font-size:.75rem}
+.ft-copy b{color:var(--gold)}
+.ft-badges{display:flex;gap:10px}
+.ft-badge{padding:4px 11px;border:1px solid rgba(255,255,255,.15);border-radius:5px;font-size:.65rem;letter-spacing:.05em}
+
+/* ═══ MOB MENU ════════════════════════════════════════════ */
+.hamburger{display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:none;padding:4px}
+.hamburger span{width:22px;height:1.5px;background:#fff;transition:.3s;display:block}
+nav.scrolled .hamburger span{background:var(--ink)}
+.mob-menu{display:none;position:fixed;inset:0;z-index:999;background:linear-gradient(135deg,#1e1b4b,#4338ca);flex-direction:column;align-items:center;justify-content:center;gap:36px}
+.mob-menu.open{display:flex}
+.mob-menu a{font-family:'Plus Jakarta Sans',sans-serif;font-size:2rem;font-weight:700;color:#fff;text-decoration:none;transition:color .2s}
+.mob-menu a:hover{color:var(--gold)}
+.mob-close{position:absolute;top:22px;right:6vw;background:none;border:none;color:rgba(255,255,255,.6);font-size:26px;cursor:none}
+
+/* ═══ REVEALS ═════════════════════════════════════════════ */
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
+.reveal.in{opacity:1;transform:translateY(0)}
+.d1{transition-delay:.1s}.d2{transition-delay:.2s}.d3{transition-delay:.3s}.d4{transition-delay:.4s}
+
+/* ═══ RESPONSIVE ══════════════════════════════════════════ */
+@media(max-width:1024px){
+  .hero-inner{grid-template-columns:1fr;gap:52px}
+  .hero-viz{display:none}
+  .feat-grid{grid-template-columns:repeat(2,1fr)}
+  .ft.tall{grid-row:span 1}
+  .pricing-grid{grid-template-columns:1fr;max-width:440px}
+  .pc.hot{transform:none}
+  .contact-grid{grid-template-columns:1fr;gap:52px}
+  .ft-inner{grid-template-columns:1fr 1fr;gap:40px}
+  .wf-steps{flex-wrap:wrap;gap:28px}
+  .wf-steps::before{display:none}
+  .ws{flex:0 0 calc(50% - 14px)}
+}
+@media(max-width:640px){
+  .feat-grid{grid-template-columns:1fr}
+  .cf-row{grid-template-columns:1fr}
+  .ft-inner{grid-template-columns:1fr}
+  nav ul{display:none}
+  .hamburger{display:flex}
+  .nav-cta{display:none}
+  .hero-kpis{gap:24px;flex-wrap:wrap}
+}
+</style>
+</head>
+<body>
+<div id="cur"></div>
+<div id="cur-ring"></div>
+
+<!-- Mobile Menu -->
+<div class="mob-menu" id="mobMenu">
+  <button class="mob-close" onclick="toggleMob()">✕</button>
+  <a href="#home" onclick="toggleMob()">Home</a>
+  <a href="#features" onclick="toggleMob()">Features</a>
+  <a href="#pricing" onclick="toggleMob()">Pricing</a>
+  <a href="#contact" onclick="toggleMob()">Contact</a>
+  <a href="/templates/login.html" style="color:var(--gold)" onclick="toggleMob()">Login →</a>
+</div>
+
+<!-- NAV -->
+<nav id="mainNav">
+  <a href="#home" class="logo">
+    <div class="logo-mark">P</div>
+    <div class="logo-txt">PDCN <span>CRM</span></div>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#home">Home</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#contact">Contact</a></li>
+    <li><a href="/templates/login.html" class="nav-cta">Login →</a></li>
+  </ul>
+  <button class="hamburger" onclick="toggleMob()"><span></span><span></span><span></span></button>
+</nav>
+
+<!-- ═══ HERO ═══ -->
+<section id="home" style="padding-top:0">
+  <div class="orb o1"></div>
+  <div class="orb o2"></div>
+  <div class="orb o3"></div>
+  <div class="hero-inner">
+
+    <!-- Left -->
+    <div>
+      <div class="chip reveal"><div class="chip-dot"></div>Enterprise PDCN Workflow Platform</div>
+      <h1 class="reveal d1">Claim<br/><strong>Smarter.</strong><br/><em>Close Faster.</em></h1>
+      <p class="hero-sub reveal d2">End-to-end Price Differential Credit Note management — dealer to credit note issuance. Multi-role approvals, real-time tracking, zero leakage.</p>
+      <div class="cta-row reveal d3">
+        <a href="/templates/login.html" class="btn-hero-primary">
+          Start Free Trial
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        <a href="#features" class="btn-hero-outline">See How It Works</a>
+      </div>
+      <div class="hero-kpis reveal d4">
+        <div><div class="kpi-num">5</div><div class="kpi-lbl">Approval Stages</div></div>
+        <div><div class="kpi-num">100%</div><div class="kpi-lbl">Audit Trail</div></div>
+        <div><div class="kpi-num">0</div><div class="kpi-lbl">Duplicate Claims</div></div>
+        <div><div class="kpi-num">∞</div><div class="kpi-lbl">Scale</div></div>
+      </div>
+    </div>
+
+    <!-- Right: Video Player -->
+    <div class="hero-viz reveal d2" id="hero-video-section">
+      <div class="hv-empty">
+        <div style="font-size:48px;margin-bottom:14px">🎬</div>
+        <div class="hv-empty-title">Platform Overview Videos</div>
+        <div class="hv-empty-sub">Training and walkthrough videos published by admin appear here.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FEATURES ═══ -->
+<div class="divider"></div>
+<section id="features">
+  <div class="wrap">
+    <div>
+      <div class="sec-ey reveal">Platform Capabilities</div>
+      <h2 class="reveal d1">Built for distribution<br/><em>finance complexity</em></h2>
+      <p class="sec-sub reveal d2" style="margin-bottom:0">Every feature engineered around real PDCN workflows — not generic CRM bolted together.</p>
+    </div>
+
+    <div class="feat-grid">
+      <!-- Tall -->
+      <div class="ft tall c1 reveal">
+        <div class="fi-wrap c1">📋</div>
+        <div class="ft-title">Multi-Stage Approval Workflow</div>
+        <div class="ft-desc">Sequential locked pipeline: Dealer → CN Team → Finance → CFA. No stage can be skipped. Every action timestamped, attributed, permanently recorded.<br/><br/>Mandatory remarks on rejection. Send-back routes claims for correction without losing history. Full timeline on every claim.</div>
+        <div class="ft-tag c1">Core Workflow</div>
+      </div>
+
+      <div class="ft c2 reveal d1">
+        <div class="fi-wrap c2">🎬</div>
+        <div class="ft-title">Video Evidence Upload</div>
+        <div class="ft-desc">Dealers attach MP4/WebM video proofs — unboxing, quality demos, delivery evidence — directly to PDCN claims.</div>
+        <div class="ft-tag c2">Media</div>
+      </div>
+
+      <div class="ft c3 reveal d2">
+        <div class="fi-wrap c3">🔢</div>
+        <div class="ft-title">Qty Utilization Ledger</div>
+        <div class="ft-desc">Real-time per-invoice quantity tracking blocks over-claiming the moment it's attempted — not after submission.</div>
+        <div class="ft-tag c3">Duplicate Prevention</div>
+      </div>
+
+      <div class="ft c4 reveal d1">
+        <div class="fi-wrap c4">🛡️</div>
+        <div class="ft-title">Role-Based Access Control</div>
+        <div class="ft-desc">5 distinct roles with surgically scoped access. Dealers never see competitors. CFA only sees finance-approved claims. Enforced at API level.</div>
+        <div class="ft-tag c4">Security</div>
+      </div>
+
+      <div class="ft c5 reveal d2">
+        <div class="fi-wrap c5">📊</div>
+        <div class="ft-title">Sales Register Upload</div>
+        <div class="ft-desc">Bulk Excel/CSV upload by Finance each month. Becomes the master validation source for all claim verification.</div>
+        <div class="ft-tag c5">Finance</div>
+      </div>
+
+      <div class="ft c6 reveal">
+        <div class="fi-wrap c6">💬</div>
+        <div class="ft-title">Internal Messaging</div>
+        <div class="ft-desc">Cross-department 1:1 chat with claim references. Dealer-to-dealer messaging blocked by design. Real-time polling.</div>
+        <div class="ft-tag c6">Collaboration</div>
+      </div>
+
+      <div class="ft c7 reveal d1">
+        <div class="fi-wrap c7">⬇️</div>
+        <div class="ft-title">Role-Scoped Excel Exports</div>
+        <div class="ft-desc">Each role exports only their data with their relevant remarks. Finance sees all; CN sees CN remarks only; Dealer sees full transparency on own claims.</div>
+        <div class="ft-tag c7">Reporting</div>
+      </div>
+
+      <div class="ft c8 reveal d2">
+        <div class="fi-wrap c8">📄</div>
+        <div class="ft-title">Credit Note Lifecycle</div>
+        <div class="ft-desc">CFA generates CN number, uploads PDF, marks completed. Dealer notified instantly with full download access and history retained.</div>
+        <div class="ft-tag c8">CFA Module</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ WORKFLOW ═══ -->
+<div class="divider"></div>
+<div class="wf-section">
+  <div class="wf-inner">
+    <div class="sec-ey reveal">How It Works</div>
+    <h2 class="reveal d1">Five stages. <em>Zero ambiguity.</em></h2>
+    <div class="wf-steps">
+      <div class="ws reveal"><div class="wn wn1">1</div><div class="wt">Dealer Submits</div><div class="wd">Creates claim with invoice lines, uploads docs & video</div></div>
+      <div class="ws reveal d1"><div class="wn wn2">2</div><div class="wt">CN Team Reviews</div><div class="wd">Validates invoice details, approves or sends back</div></div>
+      <div class="ws reveal d2"><div class="wn wn3">3</div><div class="wt">Finance Approves</div><div class="wd">Verifies calculations, qty utilization, duplicate check</div></div>
+      <div class="ws reveal d3"><div class="wn wn4">4</div><div class="wt">CFA Issues CN</div><div class="wd">Generates CN number, uploads PDF, notifies dealer</div></div>
+      <div class="ws reveal d4"><div class="wn wn5">5</div><div class="wt">Claim Closed</div><div class="wd">Dealer downloads CN, full audit trail archived</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PRICING ═══ -->
+<div class="divider"></div>
+<section id="pricing">
+  <div class="wrap">
+    <div class="pricing-head">
+      <div class="sec-ey reveal">Transparent Pricing</div>
+      <h2 class="reveal d1">Simple plans, <em>no surprises</em></h2>
+      <p class="sec-sub reveal d2">All prices exclude applicable GST. 14-day free trial on all plans. No credit card required.</p>
+    </div>
+
+    <div class="btoggle reveal">
+      <span class="btog-label active" id="lbl-monthly">Monthly</span>
+      <div class="btoggle-track" id="btoggle" onclick="toggleBilling()"><div class="btoggle-knob"></div></div>
+      <span class="btog-label" id="lbl-annual">Annual</span>
+      <span class="save-pill" id="save-pill" style="display:none">Save 20%</span>
+    </div>
+
+    <div class="pricing-grid" id="pricing-grid">
+      <div class="pc"><div class="pt">Loading…</div></div>
+      <div class="pc hot"><div class="hot-badge">Most Popular</div><div class="pt">Loading…</div></div>
+      <div class="pc"><div class="pt">Loading…</div></div>
+    </div>
+    <div class="gst-note reveal">* All prices exclude applicable GST &nbsp;·&nbsp; 14-day free trial &nbsp;·&nbsp; No credit card required</div>
+  </div>
+</section>
+
+<!-- ═══ CONTACT ═══ -->
+<div class="divider"></div>
+<section id="contact">
+  <div class="wrap">
+    <div class="contact-grid">
+      <!-- Info -->
+      <div>
+        <div class="sec-ey reveal">Get In Touch</div>
+        <h2 class="reveal d1">We're here to <em>help you</em></h2>
+        <p class="sec-sub reveal d2" style="margin-bottom:40px">Talk to our team for a demo, pricing, or any questions about the PDCN platform.</p>
+
+        <div class="ci-item reveal d2">
+          <div class="ci-icon c1">🏢</div>
+          <div><div class="ci-label">Company</div><div class="ci-val">Taxly India Private Limited</div></div>
+        </div>
+        <div class="ci-item reveal d2">
+          <div class="ci-icon c2">📞</div>
+          <div><div class="ci-label">Phone</div><div class="ci-val"><a href="tel:8882935471">88829 35471</a></div></div>
+        </div>
+        <div class="ci-item reveal d3">
+          <div class="ci-icon c3">✉️</div>
+          <div><div class="ci-label">Email</div><div class="ci-val"><a href="mailto:info@taxlyindia.com">info@taxlyindia.com</a></div></div>
+        </div>
+        <div class="ci-item reveal d3">
+          <div class="ci-icon c4">📍</div>
+          <div><div class="ci-label">Address</div><div class="ci-val">L-30B, LGF, Malviya Nagar<br/>New Delhi – 110017</div></div>
+        </div>
+        <div class="map-box reveal d4">
+          <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3504.9!2d77.2090!3d28.5270!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x390ce1f05f3b1ed5%3A0x7d8a6b5e4c3f2d1a!2sMalviya%20Nagar%2C%20New%20Delhi!5e0!3m2!1sen!2sin!4v1" allowfullscreen loading="lazy"></iframe>
+        </div>
+      </div>
+
+      <!-- Form -->
+      <div class="cf-card reveal d1">
+        <div class="cf-title">Send us a message</div>
+        <div class="cf-sub">We typically respond within 2 business hours.</div>
+        <form id="cf" onsubmit="submitCF(event)">
+          <div class="cf-row">
+            <div><label class="cf-label">Full Name *</label><input class="cf-input" type="text" placeholder="Your name" required/></div>
+            <div><label class="cf-label">Company</label><input class="cf-input" type="text" placeholder="Company name"/></div>
+          </div>
+          <div class="cf-row" style="margin-top:14px">
+            <div><label class="cf-label">Email *</label><input class="cf-input" type="email" placeholder="you@company.com" required/></div>
+            <div><label class="cf-label">Phone</label><input class="cf-input" type="tel" placeholder="+91 98765 43210"/></div>
+          </div>
+          <div style="margin-top:14px">
+            <label class="cf-label">I'm interested in</label>
+            <select class="cf-input">
+              <option>Select…</option>
+              <option>Product Demo</option>
+              <option>Pricing & Plans</option>
+              <option>Enterprise / Custom</option>
+              <option>Technical Support</option>
+              <option>Partnership</option>
+            </select>
+          </div>
+          <div style="margin-top:14px">
+            <label class="cf-label">Message *</label>
+            <textarea class="cf-input" placeholder="Tell us about your requirements…" required></textarea>
+          </div>
+          <button type="submit" class="cf-submit" style="margin-top:18px">
+            Send Message
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M2 8h12M8 3l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="cf-ok" id="cf-ok">✓ Message sent! We'll be in touch within 2 hours.</div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer>
+  <div class="ft-inner">
+    <div class="ft-brand">
+      <a href="#home" class="logo" style="display:inline-flex">
+        <div class="logo-mark">P</div>
+        <div class="logo-txt" style="color:#fff">PDCN <span>CRM</span></div>
+      </a>
+      <p>Enterprise PDCN Workflow CRM for Indian distribution businesses. Multi-role, multi-tenant, fully auditable.</p>
+    </div>
+    <div><div class="ft-col-title">Platform</div><ul class="ft-links"><li><a href="#features">Features</a></li><li><a href="#pricing">Pricing</a></li><li><a href="/templates/login.html">Login</a></li><li><a href="#contact">Request Demo</a></li></ul></div>
+    <div><div class="ft-col-title">Workflow</div><ul class="ft-links"><li><a href="#features">PDCN Claims</a></li><li><a href="#features">CN Team</a></li><li><a href="#features">Finance Module</a></li><li><a href="#features">CFA Credit Notes</a></li></ul></div>
+    <div><div class="ft-col-title">Contact</div><ul class="ft-links"><li><a href="tel:8882935471">88829 35471</a></li><li><a href="mailto:info@taxlyindia.com">info@taxlyindia.com</a></li><li><a href="#contact">L-30B, LGF, Malviya Nagar</a></li><li><a href="#contact">New Delhi – 110017</a></li></ul></div>
+  </div>
+  <div class="ft-bottom">
+    <div class="ft-copy">© 2025 <b>Taxly India Private Limited</b>. All rights reserved. Prices exclude GST.</div>
+    <div class="ft-badges"><div class="ft-badge">GST Compliant</div><div class="ft-badge">Made in India 🇮🇳</div></div>
+  </div>
+</footer>
+
+<script>
+// ── Cursor
+var cx=0,cy=0,rx=0,ry=0;
+var cur=document.getElementById('cur'),ring=document.getElementById('cur-ring');
+document.addEventListener('mousemove',function(e){cx=e.clientX;cy=e.clientY;});
+(function loop(){cur.style.left=cx+'px';cur.style.top=cy+'px';rx+=(cx-rx)*.13;ry+=(cy-ry)*.13;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(loop);})();
+
+// ── Nav scroll
+window.addEventListener('scroll',function(){document.getElementById('mainNav').classList.toggle('scrolled',scrollY>40);});
+
+// ── Reveal on scroll
+var obs=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting)e.target.classList.add('in');});},{threshold:.1,rootMargin:'0px 0px -30px 0px'});
+document.querySelectorAll('.reveal').forEach(function(el){obs.observe(el);});
+setTimeout(function(){document.querySelectorAll('#home .reveal').forEach(function(el){el.classList.add('in');});},80);
+
+// ── Smooth scroll
+document.querySelectorAll('a[href^="#"]').forEach(function(a){
+  a.addEventListener('click',function(e){e.preventDefault();var t=document.querySelector(a.getAttribute('href'));if(t)t.scrollIntoView({behavior:'smooth'});});
+});
+
+// ── Mobile menu
+function toggleMob(){document.getElementById('mobMenu').classList.toggle('open');}
+
+// ── Billing toggle
+var isAnnual=false;
+var plansData=[];
+
+function toggleBilling(){
+  isAnnual=!isAnnual;
+  var tr=document.getElementById('btoggle');
+  tr.classList.toggle('annual',isAnnual);
+  document.getElementById('lbl-monthly').classList.toggle('active',!isAnnual);
+  document.getElementById('lbl-annual').classList.toggle('active',isAnnual);
+  document.getElementById('save-pill').style.display=isAnnual?'inline':'none';
+  if(plansData.length)renderPricing(plansData);
+}
+
+// ── Load pricing from API
+async function loadPricing(){
+  try{
+    var res=await fetch('/api/v1/pricing/plans/public');
+    if(!res.ok)throw new Error();
+    plansData=await res.json();
+    var maxDisc=Math.max.apply(null,plansData.map(function(p){return p.annual_discount_pct||0;}));
+    if(maxDisc){document.getElementById('save-pill').textContent='Save '+maxDisc+'%';}
+    renderPricing(plansData);
+  }catch(e){renderFallback();}
+}
+
+function fmt(n){return n?n.toLocaleString('en-IN'):'Custom';}
+
+function renderPricing(plans){
+  var grid=document.getElementById('pricing-grid');
+  grid.innerHTML=plans.map(function(p){
+    var isFeat=p.is_featured,isEnt=p.slug==='enterprise';
+    var price=isAnnual&&p.annual_monthly_equiv?p.annual_monthly_equiv:p.monthly_price;
+    var saveAmt=isAnnual&&p.monthly_price&&p.annual_monthly_equiv?(p.monthly_price-p.annual_monthly_equiv)*12:0;
+    var priceStr=isEnt?'Custom':(price?'₹'+fmt(price):'Custom');
+    var perStr=isEnt?'— contact us':(price?(isAnnual?'/month, billed annually':'/month, ex-GST'):'');
+    var saveStr=saveAmt>0?'You save ₹'+fmt(saveAmt)+'/year':'';
+    var feats=(p.features||[]).map(function(f){return '<li>'+f+'</li>';}).join('');
+    var btn=isEnt
+      ?'<a href="#contact" class="btn-pc btn-pc-outline">Contact Sales</a>'
+      :isFeat
+        ?'<a href="#contact" class="btn-pc btn-pc-primary">Start Free Trial</a>'
+        :'<a href="#contact" class="btn-pc btn-pc-outline">Get Started</a>';
+    return '<div class="pc'+(isFeat?' hot':'')+'">'+
+      (isFeat?'<div class="hot-badge">⭐ Most Popular</div>':'')+
+      '<div class="pt">'+(p.name||'Plan')+'</div>'+
+      '<div class="pa"><span class="pc-sym">'+(isEnt?'':'₹')+'</span>'+
+      '<span class="pc-num">'+(isEnt?'Custom':(price?fmt(price):'Custom'))+'</span></div>'+
+      '<div class="pc-per">'+perStr+'</div>'+
+      '<div class="pc-save">'+saveStr+'</div>'+
+      '<div class="pc-desc">'+(p.description||'')+'</div>'+
+      '<ul class="pc-feats">'+feats+'</ul>'+btn+'</div>';
+  }).join('');
+}
+
+function renderFallback(){
+  plansData=[
+    {name:'Starter',slug:'starter',description:'Full 5-stage workflow for small teams.',monthly_price:4999,annual_monthly_equiv:3999,annual_discount_pct:20,is_featured:false,features:['Full 5-stage PDCN workflow','Up to 5 team users','100 CN / month','Sales register upload','Excel exports','Internal chat','5 GB storage']},
+    {name:'Professional',slug:'professional',description:'Unlimited claims for growing businesses.',monthly_price:12999,annual_monthly_equiv:10399,annual_discount_pct:20,is_featured:true,features:['Everything in Starter','Up to 20 team users','Unlimited CN / month','Video evidence upload','Priority support','Advanced reports','50 GB storage']},
+    {name:'Enterprise',slug:'enterprise',description:'Custom for large-scale operations.',monthly_price:0,annual_monthly_equiv:0,annual_discount_pct:0,is_featured:false,features:['Everything in Professional','Unlimited users','ERP / SAP integration','White-label option','On-premise deployment','Dedicated account manager','500 GB storage']}
+  ];
+  renderPricing(plansData);
+}
+
+// ── Hero video player
+var heroVideos=[],heroIdx=0;
+async function loadHeroVideos(){
+  var el=document.getElementById('hero-video-section');
+  try{
+    var res=await fetch('/api/v1/knowledge/videos/public');
+    if(!res.ok)throw new Error();
+    var data=await res.json();
+    var vids=(data.videos||[]).filter(function(v){return v.is_published;});
+    if(!vids.length)return;
+    heroVideos=vids;
+    renderHeroPlayer(el);
+  }catch(e){}
+}
+
+function renderHeroPlayer(el){
+  var v=heroVideos[heroIdx];
+  var playlist=heroVideos.length>1?heroVideos.map(function(vid,i){
+    return '<div class="hv-pl-item'+(i===heroIdx?' active':'')+'" onclick="switchVideo('+i+')">'+
+      '<div class="hv-pl-num">'+(i+1)+'</div>'+
+      '<div><div class="hv-pl-title">'+esc(vid.title)+'</div></div>'+
+      (i===heroIdx?'<div class="hv-pl-playing">▶</div>':'')+
+    '</div>';
+  }).join(''):'';
+
+  el.innerHTML='<div class="hv-wrap">'+
+    '<div class="hv-video-area" id="hv-area">'+
+      '<video id="hv-vid" preload="metadata" onended="hvNext()"></video>'+
+      '<div class="hv-overlay" id="hv-ov">'+
+        '<button class="hv-play-btn" id="hv-pb" onclick="hvToggle()">▶</button>'+
+        '<div style="margin-top:10px;font-size:11px;color:rgba(255,255,255,.6)">Click to play</div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="hv-footer">'+
+      '<div>'+
+        '<div class="hv-title" id="hv-tit">'+esc(v.title)+'</div>'+
+        '<div class="hv-cat">'+esc(v.category_label||'Training')+'</div>'+
+      '</div>'+
+      '<div class="hv-controls">'+
+        (heroVideos.length>1?'<button class="hv-ctrl-btn" onclick="hvPrev()">‹</button>':'')+
+        '<button class="hv-ctrl-btn" id="hv-vol" onclick="hvMute()">🔊</button>'+
+        (heroVideos.length>1?'<button class="hv-ctrl-btn" onclick="hvNext()">›</button>':'')+
+      '</div>'+
+    '</div>'+
+    (playlist?'<div class="hv-playlist">'+playlist+'</div>':'')+
+  '</div>';
+  hvLoadSrc(heroIdx);
+}
+
+function hvLoadSrc(i){
+  var v=heroVideos[i];
+  var vid=document.getElementById('hv-vid');
+  var area=document.getElementById('hv-area');
+  if(!vid||!v)return;
+  vid.src='/api/v1/knowledge/videos/'+v.filename+'/public-stream';
+  vid.load();
+  area.classList.remove('playing');
+  var pb=document.getElementById('hv-pb');if(pb)pb.textContent='▶';
+  var tit=document.getElementById('hv-tit');if(tit)tit.textContent=v.title;
+  document.querySelectorAll('.hv-pl-item').forEach(function(el,idx){
+    el.classList.toggle('active',idx===i);
+    var num=el.querySelector('.hv-pl-num');
+    if(num){num.style.background=idx===i?'var(--gold)':'';num.style.color=idx===i?'var(--ink)':'#fff';num.style.borderColor=idx===i?'var(--gold)':'';}
+    var pl=el.querySelector('.hv-pl-playing');
+    if(!pl&&idx===i){var d=document.createElement('div');d.className='hv-pl-playing';d.textContent='▶';el.appendChild(d);}
+    else if(pl&&idx!==i)pl.remove();
+  });
+}
+function hvToggle(){var vid=document.getElementById('hv-vid'),area=document.getElementById('hv-area'),pb=document.getElementById('hv-pb');if(!vid)return;if(vid.paused){vid.play();area.classList.add('playing');pb.textContent='⏸';}else{vid.pause();area.classList.remove('playing');pb.textContent='▶';}}
+function hvMute(){var vid=document.getElementById('hv-vid'),btn=document.getElementById('hv-vol');if(!vid)return;vid.muted=!vid.muted;btn.textContent=vid.muted?'🔇':'🔊';}
+function hvPrev(){heroIdx=(heroIdx-1+heroVideos.length)%heroVideos.length;hvLoadSrc(heroIdx);}
+function hvNext(){heroIdx=(heroIdx+1)%heroVideos.length;hvLoadSrc(heroIdx);}
+function switchVideo(i){heroIdx=i;hvLoadSrc(i);setTimeout(function(){var vid=document.getElementById('hv-vid');if(vid){vid.play();document.getElementById('hv-area').classList.add('playing');document.getElementById('hv-pb').textContent='⏸';}},150);}
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// ── Contact form
+function submitCF(e){e.preventDefault();var btn=e.target.querySelector('.cf-submit');btn.textContent='Sending…';btn.disabled=true;setTimeout(function(){btn.style.display='none';document.getElementById('cf-ok').style.display='block';},1200);}
+
+loadPricing();
+loadHeroVideos();
+</script>
+</body>
+</html>

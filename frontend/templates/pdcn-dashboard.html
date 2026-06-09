@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>PDCN Dashboard – CRM</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/static/css/dashboard.css"/>
+<script src="/static/js/app.js"></script>
+<script>
+var _deleting = {};  // guard against double-click
+
+async function deleteDraft(claimId, claimNo){
+  // Already in progress for this claim — ignore
+  if(_deleting[claimId]) return;
+
+  if(!confirm('Delete draft claim ' + claimNo + '?\nThis cannot be undone.')){
+    return;
+  }
+
+  _deleting[claimId] = true;
+
+  // Grey out the delete button immediately
+  var btn = document.querySelector('[onclick*="deleteDraft(\''+claimId+'\',"]');
+  if(btn){ btn.disabled = true; btn.style.opacity = '0.4'; btn.textContent = 'Deleting…'; }
+
+  try{
+    await api('/pdcn/claims/' + claimId, {method:'DELETE'});
+    showToast('Claim ' + claimNo + ' deleted.', 'success');
+    load({});
+  }catch(e){
+    var msg = e.message || String(e);
+    // 404 after a successful delete just means it was already removed — treat as success
+    if(msg.includes('not found') || msg.includes('404')){
+      showToast('Claim ' + claimNo + ' already deleted.', 'success');
+      load({});
+    } else {
+      showToast('Delete failed: ' + msg, 'error');
+      delete _deleting[claimId];
+      if(btn){ btn.disabled = false; btn.style.opacity = '1'; btn.textContent = '🗑 Delete'; }
+    }
+  }
+}
+</script>
+<style>
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-bottom:28px}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 16px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.kpi-card:hover{transform:translateY(-3px);box-shadow:var(--s2);border-color:var(--primary)}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.kpi-num{font-size:28px;font-weight:800;font-family:'Plus Jakarta Sans',sans-serif;line-height:1;color:var(--primary)}
+.kpi-label{font-size:12px;color:var(--ink2);margin-top:6px;font-weight:500}
+.kpi-draft::before{background:#94A3B8}.kpi-submitted::before{background:var(--cobalt2)}
+.kpi-cn_approved::before{background:var(--teal)}.kpi-cn_rejected::before{background:var(--ruby)}
+.kpi-finance_approved::before{background:var(--emerald)}.kpi-finance_rejected::before{background:var(--amber)}
+.kpi-sent_back::before{background:#EA580C}.kpi-completed::before{background:var(--violet)}
+.kpi-cn_generated::before{background:var(--cobalt3)}
+
+.status-pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.sp-draft{background:#f1f5f9;color:#475569;border:1px solid #cbd5e1}
+.sp-submitted{background:var(--blue-pale);color:var(--primary);border:1px solid rgba(79,70,229,.25)}
+.sp-cn_approved{background:#ccfbf1;color:#0d9488;border:1px solid rgba(13,148,136,.25)}
+.sp-cn_rejected{background:#fee2e2;color:#dc2626;border:1px solid rgba(220,38,38,.25)}
+.sp-finance_approved{background:#d1fae5;color:#059669;border:1px solid rgba(5,150,105,.25)}
+.sp-finance_rejected{background:#fef3c7;color:#d97706;border:1px solid rgba(217,119,6,.25)}
+.sp-sent_back{background:#ffedd5;color:#ea580c;border:1px solid rgba(234,88,12,.25)}
+.sp-cn_generated{background:#e0f2fe;color:#0284c7;border:1px solid rgba(2,132,199,.25)}
+.sp-completed{background:#ede9fe;color:#7c3aed;border:1px solid rgba(124,58,237,.25)}
+.sp-cancelled{background:#f8fafc;color:#64748b;border:1px solid #cbd5e1}
+
+.filters-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;padding:14px 20px;background:var(--primary-bg);border:1.5px solid var(--cobalt-glow);border-radius:12px}
+.filter-select{padding:7px 12px;border-radius:8px;border:1px solid var(--border);background:var(--primary-bg);color:var(--ink);font-size:13px;font-family:'Nunito',sans-serif;cursor:pointer}
+.filter-select:focus{outline:none;border-color:var(--blue)}
+.filter-input{padding:7px 12px;border-radius:8px;border:1px solid var(--border);background:var(--primary-bg);color:var(--ink);font-size:13px;font-family:'Nunito',sans-serif}
+.filter-input:focus{outline:none;border-color:var(--blue)}
+
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:11px 14px;font-size:12px;font-weight:600;color:var(--ink2);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:12px 14px;font-size:13px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:hover td{background:var(--blue-pale)}
+.claim-no{font-weight:600;color:var(--primary);cursor:pointer}
+.claim-no:hover{text-decoration:underline}
+.btn-action{padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;border:none;cursor:pointer;transition:all .15s}
+.btn-view{background:var(--blue-pale);color:var(--primary);border:1px solid var(--blue-border)}
+.btn-approve{background:#d1fae5;color:#059669;border:1px solid rgba(16,185,129,.3)}
+.btn-reject{background:#fee2e2;color:#dc2626;border:1px solid rgba(239,68,68,.3)}
+.btn-action:hover{opacity:.8;transform:scale(1.02)}
+.pagination{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;font-size:13px;color:var(--muted)}
+.page-btns{display:flex;gap:6px}
+.page-btn{padding:6px 12px;border-radius:6px;border:1px solid var(--border);background:var(--primary-bg);color:var(--ink);cursor:pointer;font-size:13px}
+.page-btn:disabled{opacity:.4;cursor:not-allowed}
+.page-btn.active{background:#6366f1;color:#fff;border-color:var(--blue)}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.4);backdrop-filter:blur(6px);z-index:1000;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:500px;width:90%;max-height:85vh;overflow-y:auto}
+.modal h3{font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;margin-bottom:16px}
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:13px;font-weight:500;color:var(--cobalt);margin-bottom:6px}
+.form-input,.form-select,.form-textarea{width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--primary-bg);color:var(--ink);font-size:14px;font-family:'Nunito',sans-serif;box-sizing:border-box}
+.form-textarea{min-height:80px;resize:vertical}
+.form-input:focus,.form-select:focus,.form-textarea:focus{outline:none;border-color:var(--blue)}
+.modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+.btn{padding:9px 20px;border-radius:8px;font-size:14px;font-weight:600;border:none;cursor:pointer;transition:all .2s}
+.btn-primary{background:#6366f1;color:#fff}.btn-primary:hover{background:#4f46e5}
+.btn-success{background:#10b981;color:#fff}.btn-success:hover{background:#059669}
+.btn-danger{background:#ef4444;color:#fff}.btn-danger:hover{background:#dc2626}
+.btn-warning{background:#f59e0b;color:#fff}.btn-warning:hover{background:#d97706}
+.btn-ghost{background:var(--primary-bg);color:var(--ink2);border:1px solid var(--border)}
+.btn-ghost:hover{border-color:var(--blue);color:var(--primary)}
+.notif-bell{position:relative;cursor:pointer;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--cobalt-pale)}
+.notif-badge{position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;font-size:10px;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="icon">T</div>
+    <div>
+      <div class="name">PDCN <span>CRM</span></div>
+      <div class="badge">Workflow</div>
+    </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">PDCN Workflow</div>
+    <a class="nav-item active" href="/templates/pdcn-dashboard.html" id="snav-dashboard"><span class="nav-icon">📊</span>Dashboard</a>
+    <a class="nav-item" href="/templates/pdcn-new-claim.html" id="nav-new-claim" style="display:none"><span class="nav-icon">➕</span>New Claim</a>
+    <a class="nav-item" href="/templates/pdcn-sales-register.html" id="nav-sales" style="display:none"><span class="nav-icon">📊</span>Sales Register</a>
+    <a class="nav-item" href="/templates/pdcn-dashboard.html" id="nav-my-claims"><span class="nav-icon">📄</span>My Claims</a>
+      <a class="nav-item" href="/templates/chat.html"><span class="nav-icon">💬</span>Chat <span id="chat-unread-badge" style="display:none;background:#ef4444;color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:4px">0</span></a>
+    <a class="nav-item" href="/templates/pdcn-sales-template.html" id="snav-template"><span class="nav-icon">📥</span>Templates &amp; Reports</a>
+    <a class="nav-item" href="/templates/help-videos.html"><span class="nav-icon">🎓</span>Help &amp; Training</a>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar" id="t-avatar">U</div>
+      <div class="user-info"><div class="user-name" id="t-name">User</div><div class="user-role" id="t-role">Member</div></div>
+      <button class="logout-btn" id="logout-btn">⏻</button>
+    </div>
+  </div>
+</aside>
+
+<div class="main-content">
+  <div class="topbar">
+    <span class="topbar-title" id="page-topbar-title">PDCN Dashboard</span>
+    <div style="display:flex;gap:10px;align-items:center">
+      <button class="notif-bell" id="notif-btn" onclick="toggleNotif()">
+        🔔 <span class="notif-badge" id="notif-count" style="display:none">0</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Notification Dropdown -->
+  <div id="notif-panel" style="display:none;position:fixed;top:64px;right:16px;width:360px;background:#fff;border:1px solid var(--border);border-radius:12px;z-index:500;max-height:400px;overflow-y:auto;box-shadow:0 12px 40px rgba(15,23,42,.15)">
+    <div style="padding:12px 16px;font-weight:600;border-bottom:1px solid var(--border);font-size:14px">Notifications</div>
+    <div id="notif-list"><div style="padding:20px;text-align:center;color:var(--ink2);font-size:13px">Loading…</div></div>
+  </div>
+
+  <div class="page-content">
+    <!-- KPI Cards -->
+    <div class="kpi-grid" id="kpi-grid">
+      <div class="kpi-card"><div class="kpi-num" style="color:var(--tx-3)">—</div><div class="kpi-label">Loading…</div></div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-bar">
+      <input class="filter-input" id="search-inp" placeholder="🔍 Search claim / dealer…" style="flex:1;min-width:160px" oninput="debounceLoad()"/>
+      <select class="filter-select" id="status-filter" onchange="loadClaims()">
+        <option value="">All Statuses</option>
+        <option value="draft">Draft</option>
+        <option value="submitted">Submitted</option>
+        <option value="cn_approved">CN Approved</option>
+        <option value="cn_rejected">CN Rejected</option>
+        <option value="finance_approved">Finance Approved</option>
+        <option value="finance_rejected">Finance Rejected</option>
+        <option value="sent_back">Sent Back</option>
+        <option value="cn_generated">CN Generated</option>
+        <option value="completed">Completed</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+      <input class="filter-input" id="date-from" type="date" onchange="loadClaims()" title="From date"/>
+      <input class="filter-input" id="date-to" type="date" onchange="loadClaims()" title="To date"/>
+      <button class="btn btn-ghost" onclick="clearFilters()" style="font-size:12px">✕ Clear</button>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+      <div style="padding:14px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)">
+        <span id="table-count" style="font-size:13px;color:var(--muted)">Loading…</span>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost" style="font-size:12px" onclick="exportExcel()">⬇ Export Excel</button>
+          <button class="btn btn-ghost" style="font-size:12px" onclick="window.location.href='/templates/pdcn-new-claim.html'" id="btn-new-claim">➕ New Claim</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Claim No</th>
+              <th>Dealer</th>
+              <th>Date</th>
+              <th>Qty</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="claims-tbody"><tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted)">Loading claims…</td></tr></tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <span id="page-info">—</span>
+        <div class="page-btns">
+          <button class="page-btn" id="prev-btn">← Prev</button>
+          <button class="page-btn" id="next-btn">Next →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Action Modal -->
+<div class="modal-overlay" id="action-modal">
+  <div class="modal">
+    <h3 id="action-modal-title">Approve Claim</h3>
+    <div class="form-group">
+      <label class="form-label">Remarks <span id="remarks-required" style="color:var(--red)"></span></label>
+      <textarea class="form-textarea" id="action-remarks" placeholder="Enter remarks…"></textarea>
+    </div>
+    <div id="action-error" style="color:#ef4444;font-size:13px;display:none;margin-bottom:8px"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('action-modal')">Cancel</button>
+      <button class="btn btn-primary" id="action-submit-btn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var page=1,perPage=20,total=0,debTimer=null;
+var currentAction=null,currentClaimId=null,userRole=null;
+
+document.addEventListener('DOMContentLoaded',function(){
+  var u=getUser();
+  if(!u||!getToken()){window.location.href='/templates/login.html';return;}
+  userRole=u.role;
+  document.getElementById('t-name').textContent=u.full_name||'';
+  document.getElementById('t-avatar').textContent=(u.full_name||'U').slice(0,2).toUpperCase();
+  document.getElementById('t-role').textContent=(u.role||'').replace(/_/g,' ');
+
+  // Set role-specific topbar greeting
+  var roleGreetings = {
+    dealer: '📦 My PDCN Claims',
+    cn_team: '📋 CN Team — Claims Inbox',
+    finance_team: '💼 Finance Team — Claims Review',
+    cfa_team: '📄 CFA Team — Credit Notes',
+    finance_cfa_team: '💼 Finance & CFA — Full Access',
+    tenant_admin: '🏢 Organisation Overview'
+  };
+  var titleEl = document.getElementById('page-topbar-title');
+  if(titleEl) titleEl.textContent = roleGreetings[u.role] || 'PDCN Dashboard';
+
+  // Role-based nav
+  (function(){
+    var role = u.role;
+    if(role === 'tenant_admin'){ window.location.href = '/templates/tenant-dashboard.html'; return; }
+    // New Claim: dealer only
+    var nn=document.getElementById('nav-new-claim'); if(nn) nn.style.display=(role==='dealer'?'':'none');
+    var bnc=document.getElementById('btn-new-claim'); if(bnc) bnc.style.display=(role==='dealer'?'':'none');
+    // Sales Register: finance only
+    var ns=document.getElementById('nav-sales'); if(ns) ns.style.display=(['finance_team','finance_cfa_team'].includes(role)?'':'none');
+    // My Claims label
+    var mc=document.getElementById('nav-my-claims');
+    if(mc) mc.innerHTML='<span class="nav-icon">📄</span>'+(role==='dealer'?'My Claims':'All Claims');
+  })();
+  if(u.company_name)document.getElementById('t-company').textContent=u.company_name;
+
+  document.getElementById('logout-btn').onclick=doLogout;
+  document.getElementById('prev-btn').onclick=function(){if(page>1){page--;loadClaims();}};
+  document.getElementById('next-btn').onclick=function(){page++;loadClaims();};
+  document.getElementById('action-submit-btn').onclick=submitAction;
+
+  loadDashboard();
+  loadClaims();
+  loadNotifications();
+  loadChatUnread();
+
+  // Refresh notification & unread badges every 30s (pause when tab hidden)
+  setInterval(function(){
+    if(!document.hidden){
+      loadNotifications();
+      loadChatUnread();
+    }
+  }, 30000);
+});
+
+function getToken(){return localStorage.getItem('access_token');}
+function getUser(){try{return JSON.parse(localStorage.getItem('user')||'null');}catch{return null;}}
+function doLogout(){localStorage.clear();window.location.href='/templates/login.html';}
+
+async function callAPI(path,opts){
+  opts=opts||{};
+  var headers=Object.assign({'Content-Type':'application/json'},opts.headers||{});
+  var tok=getToken();if(tok)headers['Authorization']='Bearer '+tok;
+  var res=await fetch('/api/v1'+path,Object.assign({},opts,{headers:headers}));
+  if(!res.ok){var err=await res.json().catch(function(){return{detail:res.statusText};});throw new Error(err.detail||'Error');}
+  return res.json();
+}
+
+function statusPill(s){
+  var labels={draft:'Draft',submitted:'Submitted',cn_approved:'CN Approved',cn_rejected:'CN Rejected',
+    finance_approved:'Finance Approved',finance_rejected:'Finance Rejected',sent_back:'Sent Back',
+    cn_pending:'CN Pending',cn_generated:'CN Generated',completed:'Completed',cancelled:'Cancelled'};
+  return '<span class="status-pill sp-'+s+'">'+(labels[s]||s)+'</span>';
+}
+
+async function loadDashboard(){
+  try{
+    var d=await callAPI('/pdcn/dashboard');
+    var cards=[
+      {k:'submitted',l:'Submitted',c:'#6366f1'},
+      {k:'cn_approved',l:'CN Approved',c:'#06b6d4'},
+      {k:'finance_approved',l:'Fin. Approved',c:'#10b981'},
+      {k:'cn_generated',l:'CN Generated',c:'#0ea5e9'},
+      {k:'completed',l:'Completed',c:'#8b5cf6'},
+      {k:'cn_rejected',l:'CN Rejected',c:'#ef4444'},
+      {k:'finance_rejected',l:'Fin. Rejected',c:'#f59e0b'},
+      {k:'sent_back',l:'Sent Back',c:'#f97316'},
+      {k:'draft',l:'Draft',c:'#6b7280'},
+    ];
+    var grid=document.getElementById('kpi-grid');
+    grid.innerHTML=cards.map(function(c){
+      return '<div class="kpi-card kpi-'+c.k+'" onclick="filterByStatus(\''+c.k+'\')">'+
+        '<div class="kpi-num" style="color:'+c.c+'">'+d[c.k]+'</div>'+
+        '<div class="kpi-label">'+c.l+'</div>'+
+      '</div>';
+    }).join('');
+  }catch(e){console.warn('dashboard err',e);}
+}
+
+async function loadClaims(){
+  var s=document.getElementById('search-inp').value;
+  var st=document.getElementById('status-filter').value;
+  var df=document.getElementById('date-from').value;
+  var dt=document.getElementById('date-to').value;
+  var url='/pdcn/claims?page='+page+'&per_page='+perPage;
+  if(s)url+='&search='+encodeURIComponent(s);
+  if(st)url+='&status='+st;
+  if(df)url+='&date_from='+df;
+  if(dt)url+='&date_to='+dt;
+  try{
+    var d=await callAPI(url);
+    total=d.total;
+    renderTable(d.claims);
+    document.getElementById('table-count').textContent=total+' claims';
+    document.getElementById('page-info').textContent='Page '+page+' of '+d.pages;
+    document.getElementById('prev-btn').disabled=(page<=1);
+    document.getElementById('next-btn').disabled=(page>=d.pages);
+  }catch(e){
+    document.getElementById('claims-tbody').innerHTML='<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--muted)">'+e.message+'</td></tr>';
+  }
+}
+
+function renderTable(claims){
+  var tbody=document.getElementById('claims-tbody');
+  if(!claims||!claims.length){
+    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted)">No claims found</td></tr>';
+    return;
+  }
+  tbody.innerHTML=claims.map(function(c){
+    var date=c.request_date?new Date(c.request_date).toLocaleDateString('en-IN'):'—';
+    var actions=getActions(c);
+    return '<tr>'+
+      '<td><span class="claim-no" onclick="viewClaim(\''+c.id+'\')">'+c.claim_no+'</span></td>'+
+      '<td>'+c.dealer_name+'</td>'+
+      '<td style="color:var(--tx-3)">'+date+'</td>'+
+      '<td>'+c.total_qty+'</td>'+
+      '<td style="font-weight:600">₹'+c.total_amount+'</td>'+
+      '<td>'+statusPill(c.status)+'</td>'+
+      '<td><div style="display:flex;gap:6px;flex-wrap:wrap">'+actions+'</div></td>'+
+    '</tr>';
+  }).join('');
+}
+
+function getActions(c){
+  var btns='<button class="btn-action btn-view" onclick="viewClaim(\''+c.id+'\')">View</button>';
+  var role=userRole;
+  if(c.status==='submitted'&&['cn_team','finance_cfa_team','super_admin','tenant_admin'].includes(role)){
+    btns+='<button class="btn-action btn-approve" onclick="openAction(\''+c.id+'\',\'cn_approve\')">✓ Approve</button>';
+    btns+='<button class="btn-action btn-reject" onclick="openAction(\''+c.id+'\',\'cn_reject\')">✕ Reject</button>';
+    btns+='<button class="btn-action" style="background:#ffedd5;color:#ea580c;border:1px solid rgba(249,115,22,.3)" onclick="openAction(\''+c.id+'\',\'send_back\')">↩ Send Back</button>';
+  }
+  if(c.status==='cn_approved'&&['finance_team','finance_cfa_team','super_admin','tenant_admin'].includes(role)){
+    btns+='<button class="btn-action btn-approve" onclick="openAction(\''+c.id+'\',\'fin_approve\')">✓ Fin Approve</button>';
+    btns+='<button class="btn-action btn-reject" onclick="openAction(\''+c.id+'\',\'fin_reject\')">✕ Fin Reject</button>';
+  }
+  if(c.status==='finance_approved'&&['cfa_team','finance_cfa_team','super_admin','tenant_admin'].includes(role)){
+    btns+='<button class="btn-action" style="background:#e0f2fe;color:#0284c7;border:1px solid rgba(14,165,233,.3)" onclick="window.location.href=\'/templates/pdcn-credit-note.html?id='+c.id+'\'">📄 Generate CN</button>';
+  }
+  if(c.status==='cn_generated'&&['cfa_team','finance_cfa_team','super_admin','tenant_admin'].includes(role)){
+    btns+='<button class="btn-action btn-approve" onclick="completeClaim(\''+c.id+'\')">✓ Complete</button>';
+  }
+  if((c.status==='draft'||c.status==='sent_back')&&['dealer','super_admin','tenant_admin'].includes(role)){
+    btns+='<button class="btn-action" style="background:var(--blue-pale);color:var(--primary);border:1px solid var(--blue-border)" onclick="window.location.href=\'/templates/pdcn-new-claim.html?id='+c.id+'\'">✏ Edit</button>';
+    btns+='<button class="btn-action" style="background:#fee2e2;color:#dc2626;border:1px solid rgba(220,38,38,.3)" onclick="deleteDraft(\''+c.id+'\',\''+c.claim_no+'\')">🗑 Delete</button>';
+  }
+  return btns;
+}
+
+function filterByStatus(s){
+  document.getElementById('status-filter').value=s;
+  page=1;loadClaims();
+}
+function debounceLoad(){clearTimeout(debTimer);debTimer=setTimeout(function(){page=1;loadClaims();},350);}
+function clearFilters(){
+  document.getElementById('search-inp').value='';
+  document.getElementById('status-filter').value='';
+  document.getElementById('date-from').value='';
+  document.getElementById('date-to').value='';
+  page=1;loadClaims();
+}
+function viewClaim(id){window.location.href='/templates/pdcn-claim-detail.html?id='+id;}
+
+function openAction(claimId,action){
+  currentClaimId=claimId;currentAction=action;
+  var titles={cn_approve:'Approve Claim (CN Team)',cn_reject:'Reject Claim (CN Team)',send_back:'Send Back for Correction',fin_approve:'Finance Approval',fin_reject:'Finance Rejection'};
+  document.getElementById('action-modal-title').textContent=titles[action]||action;
+  document.getElementById('action-remarks').value='';
+  document.getElementById('action-error').style.display='none';
+  var reqd=action.includes('reject')||action==='send_back';
+  document.getElementById('remarks-required').textContent=reqd?'*':'';
+  document.getElementById('action-modal').classList.add('open');
+}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+async function submitAction(){
+  var remarks=document.getElementById('action-remarks').value.trim();
+  var errEl=document.getElementById('action-error');errEl.style.display='none';
+  var action=currentAction;
+  var isRejectOrBack=action.includes('reject')||action==='send_back';
+  if(isRejectOrBack&&!remarks){errEl.textContent='Remarks are required.';errEl.style.display='block';return;}
+  var btn=document.getElementById('action-submit-btn');btn.disabled=true;btn.textContent='Processing…';
+  try{
+    if(action.startsWith('cn_')||action==='send_back'){
+      var act=action==='cn_approve'?'approve':action==='cn_reject'?'reject':'send_back';
+      var fd=new FormData();fd.append('action',act);fd.append('remarks',remarks);
+      var res=await fetch('/api/v1/pdcn/claims/'+currentClaimId+'/cn-action',{method:'POST',headers:{'Authorization':'Bearer '+getToken()},body:fd});
+      if(!res.ok){var e=await res.json();throw new Error(e.detail||'Error');}
+    } else {
+      var act2=action==='fin_approve'?'approve':'reject';
+      var fd2=new FormData();fd2.append('action',act2);fd2.append('remarks',remarks);
+      var res2=await fetch('/api/v1/pdcn/claims/'+currentClaimId+'/finance-action',{method:'POST',headers:{'Authorization':'Bearer '+getToken()},body:fd2});
+      if(!res2.ok){var e2=await res2.json();throw new Error(e2.detail||'Error');}
+    }
+    closeModal('action-modal');
+    showToast('Action completed successfully','success');
+    loadDashboard();loadClaims();
+  }catch(e){errEl.textContent=e.message;errEl.style.display='block';}
+  btn.disabled=false;btn.textContent='Confirm';
+}
+
+async function completeClaim(id){
+  if(!confirm('Mark this claim as completed?'))return;
+  try{
+    await callAPI('/pdcn/claims'+id+'/complete',{method:'POST'});
+    showToast('Claim completed!','success');
+    loadDashboard();loadClaims();
+  }catch(e){showToast(e.message,'error');}
+}
+
+// Notifications
+var notifOpen=false;
+function toggleNotif(){
+  notifOpen=!notifOpen;
+  document.getElementById('notif-panel').style.display=notifOpen?'block':'none';
+  if(notifOpen) loadNotifications();
+}
+document.addEventListener('click',function(e){
+  if(!document.getElementById('notif-btn').contains(e.target)&&!document.getElementById('notif-panel').contains(e.target)){
+    notifOpen=false;document.getElementById('notif-panel').style.display='none';
+  }
+});
+
+async function loadNotifications(){
+  try{
+    var d=await callAPI('/pdcn/notifications');
+    var badge=document.getElementById('notif-count');
+    if(d.unread_count>0){badge.style.display='flex';badge.textContent=d.unread_count;}
+    else badge.style.display='none';
+    var list=document.getElementById('notif-list');
+    if(!d.notifications.length){list.innerHTML='<div style="padding:20px;text-align:center;color:var(--ink2);font-size:13px">No notifications</div>';return;}
+    list.innerHTML=d.notifications.map(function(n){
+      return '<div style="padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;'+(n.is_read?'opacity:.6':'')+'" onclick="markRead(\''+n.id+'\',\''+n.claim_id+'\')">'+
+        '<div style="font-size:13px;font-weight:600;margin-bottom:3px">'+n.title+'</div>'+
+        '<div style="font-size:12px;color:var(--muted)">'+n.message+'</div>'+
+        '<div style="font-size:11px;color:var(--ink2);margin-top:3px">'+new Date(n.created_at).toLocaleString()+'</div>'+
+      '</div>';
+    }).join('');
+  }catch(e){console.warn(e);}
+}
+
+async function markRead(id,claimId){
+  try{await callAPI('/pdcn/notifications/'+id+'/read',{method:'POST'});}catch(e){}
+  if(claimId&&claimId!=='null')viewClaim(claimId);
+  loadNotifications(); // refreshes notification badge
+}
+
+function showToast(msg,type){
+  type=type||'success';
+  var colors={success:'#10b981',error:'#ef4444',warning:'#f59e0b'};
+  var t=document.createElement('div');
+  t.style.cssText='position:fixed;top:20px;right:20px;z-index:9999;background:var(--surface);color:var(--ink);padding:14px 20px;border-radius:10px;border-left:4px solid '+colors[type]+';box-shadow:0 8px 32px rgba(0,0,0,.4);font-family:Nunito,sans-serif;font-size:14px;min-width:260px;cursor:pointer';
+  t.textContent=msg;t.onclick=function(){t.remove();};
+  document.body.appendChild(t);setTimeout(function(){t.remove();},4000);
+}
+
+async function exportExcel(){
+  var s=document.getElementById('search-inp').value;
+  var st=document.getElementById('status-filter').value;
+  var df=document.getElementById('date-from').value;
+  var dt=document.getElementById('date-to').value;
+  var url='/api/v1/reports/claims/excel?';
+  if(s)url+='search='+encodeURIComponent(s)+'&';
+  if(st)url+='status='+st+'&';
+  if(df)url+='date_from='+df+'&';
+  if(dt)url+='date_to='+dt+'&';
+  try{
+    var res=await fetch(url,{headers:{'Authorization':'Bearer '+getToken()}});
+    if(!res.ok){var e=await res.json();showToast(e.detail||'Export failed','error');return;}
+    var blob=await res.blob();
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    var cd=res.headers.get('content-disposition')||'';
+    var fn=cd.match(/filename="([^"]+)"/);
+    a.download=fn?fn[1]:'PDCN_Claims.xlsx';
+    a.click();
+    showToast('Excel exported!','success');
+  }catch(e){showToast(e.message,'error');}
+}
+
+// Load chat unread count
+async function loadChatUnread(){
+  try{
+    var d=await callAPI('/chat/unread-count');
+    var b=document.getElementById('chat-unread-badge');
+    if(b){if(d.unread_count>0){b.style.display='inline';b.textContent=d.unread_count;}else{b.style.display='none';}}
+  }catch(e){}
+}
+</script>
+</body>
+</html>
